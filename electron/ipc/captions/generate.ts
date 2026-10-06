@@ -256,6 +256,10 @@ export async function generateAutoCaptionsFromVideo(options: {
 			"-l",
 			language,
 			"-np",
+			// Also give the SRT fallback real word boundaries.
+			"-ml",
+			"1",
+			"-sow",
 		];
 
 		let jsonEnabled = true;
@@ -285,8 +289,16 @@ export async function generateAutoCaptionsFromVideo(options: {
 				"[auto-captions] Whisper JSON produced no word-timed cues; falling back to SRT (no word timings).",
 			);
 		}
-		const cues =
+		const parsedCues =
 			timedCues.length > 0 ? timedCues : parseSrtCues(await fs.readFile(srtPath, "utf-8"));
+		const cues = parsedCues.map((cue) =>
+			!cue.words?.length && cue.text.trim().split(/\s+/).length === 1
+				? {
+						...cue,
+						words: [{ text: cue.text.trim(), startMs: cue.startMs, endMs: cue.endMs }],
+					}
+				: cue,
+		);
 		if (cues.length === 0) {
 			throw new Error("Whisper completed, but no caption cues were produced.");
 		}

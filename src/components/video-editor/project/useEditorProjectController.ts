@@ -178,6 +178,7 @@ export function useEditorProjectController(input: Input) {
 		isGeneratingCaptions: input.isGeneratingCaptions,
 		setIsGeneratingCaptions: input.setIsGeneratingCaptions,
 		autoCaptionSettings: input.timeline.autoCaptionSettings,
+		autoCaptions: input.timeline.autoCaptions,
 		setAutoCaptionSettings: input.timeline.setAutoCaptionSettings,
 		setAutoCaptions: input.timeline.setAutoCaptions,
 		syncActiveVideoSource: lifecycle.syncActiveVideoSource,

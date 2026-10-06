@@ -21,6 +21,7 @@ import {
 import { DEFAULT_WALLPAPER_PATH } from "@/lib/wallpapers";
 import { ASPECT_RATIOS, type AspectRatio, isCustomAspectRatio } from "@/utils/aspectRatioUtils";
 import { CURSOR_MOTION_PRESETS, resolveCursorMotionPresetId } from "./cursorMotionPresets";
+import { loadCaptionGenerationDefaults, normalizeCaptionWordLimit } from "./rapidCaptions";
 import {
 	ADVANCED_VERTICAL_PADDING_MAX,
 	type AnnotationRegion,
@@ -769,6 +770,15 @@ export function normalizeProjectEditor(editor: Partial<ProjectEditorState>): Pro
 			? (editor.autoCaptionSettings as Partial<AutoCaptionSettings>)
 			: {};
 	const normalizedAutoCaptionSettings: AutoCaptionSettings = {
+		segmentationMode:
+			rawAutoCaptionSettings.segmentationMode === "phrase" ||
+			rawAutoCaptionSettings.segmentationMode === "rapid"
+				? rawAutoCaptionSettings.segmentationMode
+				: loadCaptionGenerationDefaults().segmentationMode,
+		wordsPerCaption: normalizeCaptionWordLimit(
+			rawAutoCaptionSettings.wordsPerCaption ??
+				loadCaptionGenerationDefaults().wordsPerCaption,
+		),
 		enabled:
 			typeof rawAutoCaptionSettings.enabled === "boolean"
 				? rawAutoCaptionSettings.enabled

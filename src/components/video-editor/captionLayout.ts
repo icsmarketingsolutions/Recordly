@@ -539,8 +539,10 @@ export function buildActiveCaptionLayout(options: {
 		options.settings.animationStyle !== "none" &&
 		!isWithinCaptionCoverage(options.cues, visibleContentEndMs + 1);
 	const exitAnchorMs = willDisappear ? visibleContentEndMs : animationEndMs;
-	const enterProgress = clamp01((options.timeMs - animationStartMs) / CAPTION_ENTER_MS);
-	const exitProgress = clamp01((exitAnchorMs - options.timeMs) / CAPTION_EXIT_MS);
+	const enterMs = options.settings.segmentationMode === "rapid" ? 85 : CAPTION_ENTER_MS;
+	const exitMs = options.settings.segmentationMode === "rapid" ? 65 : CAPTION_EXIT_MS;
+	const enterProgress = clamp01((options.timeMs - animationStartMs) / enterMs);
+	const exitProgress = clamp01((exitAnchorMs - options.timeMs) / exitMs);
 	const animation = getCaptionAnimationState(
 		options.settings.animationStyle,
 		enterProgress,

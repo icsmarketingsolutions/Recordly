@@ -43,6 +43,7 @@ import {
 } from "./cursorMotionPresets";
 import { loadEditorPreferences, saveEditorPreferences } from "./editorPreferences";
 import { getDefaultBorderRadiusPercent } from "./projectPersistence";
+import { RAPID_CAPTION_STYLE, saveCaptionGenerationDefaults } from "./rapidCaptions";
 import { SliderControl } from "./SliderControl";
 import { KeyboardShortcutsDialog } from "./TutorialHelp";
 import type {
@@ -637,6 +638,7 @@ interface SettingsPanelProps {
 	onPickWhisperExecutable?: () => void;
 	onPickWhisperModel?: () => void;
 	onGenerateAutoCaptions?: () => void;
+	onSplitRapidCaptions?: () => void;
 	onClearAutoCaptions?: () => void;
 	onDownloadWhisperSmallModel?: () => void;
 	onDeleteWhisperSmallModel?: () => void;
@@ -1083,6 +1085,7 @@ export function SettingsPanel({
 	onAutoCaptionSettingsChange,
 	onPickWhisperModel,
 	onGenerateAutoCaptions,
+	onSplitRapidCaptions,
 	onClearAutoCaptions,
 	onDownloadWhisperSmallModel,
 	onDeleteWhisperSmallModel,
@@ -2311,6 +2314,76 @@ export function SettingsPanel({
 					>
 						{tSettings("captions.selectModel", "Select Model")}
 					</Button>
+				</div>
+				<div className="space-y-2 rounded-lg border border-[#2563EB]/30 p-2">
+					<label className="block text-sm font-medium" htmlFor="caption-generation-mode">
+						Modo de subtítulos
+					</label>
+					<select
+						id="caption-generation-mode"
+						aria-label="Modo de subtítulos"
+						className="w-full rounded-lg bg-editor-surface-alt p-2 text-sm"
+						value={autoCaptionSettings.segmentationMode ?? "rapid"}
+						onChange={(event) => {
+							const segmentationMode =
+								event.target.value === "rapid" ? "rapid" : "phrase";
+							const settings: AutoCaptionSettings = {
+								...autoCaptionSettings,
+								...(segmentationMode === "rapid" ? RAPID_CAPTION_STYLE : {}),
+								segmentationMode,
+							};
+							onAutoCaptionSettingsChange?.(settings);
+							if (!saveCaptionGenerationDefaults(settings))
+								toast.error("No se pudo guardar el modo para otros videos");
+						}}
+					>
+						<option value="rapid">Subtítulos rápidos · Pop</option>
+						<option value="phrase">Frases completas</option>
+					</select>
+					{autoCaptionSettings.segmentationMode !== "phrase" ? (
+						<>
+							<label
+								className="flex items-center justify-between text-xs"
+								htmlFor="caption-word-limit"
+							>
+								Máximo de palabras
+								<select
+									id="caption-word-limit"
+									aria-label="Máximo de palabras"
+									className="rounded-lg bg-editor-surface-alt p-2"
+									value={autoCaptionSettings.wordsPerCaption ?? 3}
+									onChange={(event) => {
+										const settings = {
+											...autoCaptionSettings,
+											wordsPerCaption: Number(event.target.value),
+										};
+										onAutoCaptionSettingsChange?.(settings);
+										if (!saveCaptionGenerationDefaults(settings))
+											toast.error("No se pudo guardar el máximo de palabras");
+									}}
+								>
+									{[1, 2, 3, 4, 5, 6].map((count) => (
+										<option key={count} value={count}>
+											{count}
+										</option>
+									))}
+								</select>
+							</label>
+							<p className="text-xs text-muted-foreground">
+								Al generar: bloques cortos al ritmo de la voz y animación Pop. Se
+								recuerda para otros videos y se guarda en tus presets.
+							</p>
+							<Button
+								type="button"
+								variant="outline"
+								className="w-full text-xs"
+								disabled={!captionCueCount || isGeneratingCaptions}
+								onClick={onSplitRapidCaptions}
+							>
+								Aplicar a subtítulos existentes
+							</Button>
+						</>
+					) : null}
 				</div>
 				<div className="flex items-center justify-between gap-3">
 					<div className="text-sm font-medium text-foreground">

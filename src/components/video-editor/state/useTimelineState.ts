@@ -11,7 +11,7 @@ import type {
 	TrimRegion,
 	ZoomRegion,
 } from "../types";
-import { DEFAULT_AUTO_CAPTION_SETTINGS } from "../types";
+import { initialCaptionSettings } from "../rapidCaptions";
 
 export function useTimelineState() {
 	const [zoomRegions, setZoomRegions] = useState<ZoomRegion[]>([]);
@@ -36,7 +36,7 @@ export function useTimelineState() {
 	const [hasClipSourceAudio, setHasClipSourceAudio] = useState(false);
 	const [autoCaptions, setAutoCaptions] = useState<CaptionCue[]>([]);
 	const [autoCaptionSettings, setAutoCaptionSettings] = useState<AutoCaptionSettings>(
-		DEFAULT_AUTO_CAPTION_SETTINGS,
+		initialCaptionSettings,
 	);
 
 	return {

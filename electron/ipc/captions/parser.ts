@@ -34,6 +34,10 @@ export function parseWhisperJsonWords(tokens: unknown): CaptionWordPayload[] {
 		if (!tokenText) {
 			continue;
 		}
+		// Control/timestamp tokens have zero-length offsets but contain no speech.
+		if (/^\[_[^\]]+\]$/.test(tokenText.trim())) {
+			continue;
+		}
 
 		const tokenStartMs = isFiniteNumber(tokenData.offsets?.from)
 			? Math.round(tokenData.offsets.from)

@@ -561,6 +561,8 @@ export interface CaptionCueWord {
 export type AutoCaptionAnimation = "none" | "fade" | "rise" | "pop";
 
 export interface AutoCaptionSettings {
+	segmentationMode?: "phrase" | "rapid";
+	wordsPerCaption?: number;
 	enabled: boolean;
 	/** Show the hover ghost on the timeline caption track for click-to-add. */
 	timelineQuickAdd: boolean;
