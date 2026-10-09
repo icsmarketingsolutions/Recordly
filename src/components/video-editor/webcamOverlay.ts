@@ -1,4 +1,5 @@
-import type { CropRegion, WebcamCorner, WebcamPositionPreset } from "./types";
+import { normalizeCameraFxSettings } from "@/lib/cameraFx/settings";
+import type { CropRegion, WebcamCorner, WebcamEffectsBake, WebcamPositionPreset } from "./types";
 
 const MIN_WEBCAM_OVERLAY_SIZE_PX = 56;
 export const WEBCAM_REFERENCE_VIEWPORT_WIDTH = 1920;
@@ -258,4 +259,36 @@ export function getCropMatchedWebcamHeightPercent(
 	}
 
 	return clamp(safeWidthPercent / cropAspect, 10, 100);
+}
+
+export function normalizeWebcamEffectsBake(
+	value: unknown,
+	sourcePath: string | null,
+): WebcamEffectsBake | null {
+	if (!value || typeof value !== "object" || !sourcePath) return null;
+	const candidate = value as Partial<Record<keyof WebcamEffectsBake, unknown>>;
+	if (
+		typeof candidate.originalPath !== "string" ||
+		candidate.originalPath.length === 0 ||
+		candidate.outputPath !== sourcePath
+	) {
+		return null;
+	}
+	return {
+		originalPath: candidate.originalPath,
+		outputPath: sourcePath,
+		effects: normalizeCameraFxSettings(candidate.effects),
+	};
+}
+
+/** The processed copy currently shown, or null when the footage is untouched. */
+export function getActiveWebcamEffectsBake(webcam: {
+	sourcePath: string | null;
+	effectsBake?: WebcamEffectsBake | null;
+}): WebcamEffectsBake | null {
+	return webcam.effectsBake &&
+		webcam.sourcePath &&
+		webcam.effectsBake.outputPath === webcam.sourcePath
+		? webcam.effectsBake
+		: null;
 }

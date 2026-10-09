@@ -10,7 +10,7 @@ import type { useZoomRegionCommands } from "../hooks/useZoomRegionCommands";
 import { SettingsPanel } from "../SettingsPanel";
 import type { useAppearanceState } from "../state/useAppearanceState";
 import type { useTimelineState } from "../state/useTimelineState";
-import type { EditorEffectSection } from "../types";
+import type { EditorEffectSection, WebcamEffectsBake } from "../types";
 
 type Input = {
 	activeEffectSection: EditorEffectSection;
@@ -38,6 +38,8 @@ type Input = {
 	setNativeCaptureUnavailableModalOpen: Dispatch<SetStateAction<boolean>>;
 	handleUploadWebcam: () => void;
 	handleClearWebcam: () => void;
+	handleWebcamEffectsBaked: (bake: WebcamEffectsBake) => Promise<void>;
+	handleRestoreWebcamOriginal: () => Promise<void>;
 };
 
 export function useEditorSettingsPanelProps(input: Input): ComponentProps<typeof SettingsPanel> {
@@ -67,6 +69,8 @@ export function useEditorSettingsPanelProps(input: Input): ComponentProps<typeof
 		setNativeCaptureUnavailableModalOpen,
 		handleUploadWebcam,
 		handleClearWebcam,
+		handleWebcamEffectsBaked,
+		handleRestoreWebcamOriginal,
 	} = input;
 	const selectedZoom = timeline.zoomRegions.find(
 		(region) => region.id === timeline.selectedZoomId,
@@ -185,6 +189,8 @@ export function useEditorSettingsPanelProps(input: Input): ComponentProps<typeof
 		onWebcamChange: appearance.setWebcam,
 		onUploadWebcam: handleUploadWebcam,
 		onClearWebcam: handleClearWebcam,
+		onWebcamEffectsBaked: handleWebcamEffectsBaked,
+		onRestoreWebcamOriginal: handleRestoreWebcamOriginal,
 		padding: appearance.padding,
 		onPaddingChange: appearance.setPadding,
 		cropRegion: appearance.cropRegion,

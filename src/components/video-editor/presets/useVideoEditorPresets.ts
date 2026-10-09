@@ -149,6 +149,7 @@ export function useVideoEditorPresets({
 			appearance.setWebcam((current) => ({
 				...snapshot.webcam,
 				sourcePath: current.sourcePath,
+				effectsBake: current.effectsBake ?? null,
 			}));
 			setAspectRatio(snapshot.aspectRatio);
 			exportSettings.setExportEncodingMode(snapshot.exportEncodingMode);

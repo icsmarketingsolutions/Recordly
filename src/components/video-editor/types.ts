@@ -1,3 +1,5 @@
+import type { CameraFxSettings } from "@/lib/cameraFx/settings";
+
 export type ZoomDepth = 1 | 2 | 3 | 4 | 5 | 6;
 
 export interface ZoomFocus {
@@ -152,6 +154,20 @@ export interface WebcamOverlaySettings {
 	cornerRadius?: number;
 	shadow: number;
 	margin: number;
+	/** Camera effects chosen in the editor (not necessarily applied yet). */
+	effects?: CameraFxSettings;
+	/**
+	 * Last processed copy. It only counts while `outputPath === sourcePath`, so
+	 * any other code that swaps the footage implicitly discards it.
+	 */
+	effectsBake?: WebcamEffectsBake | null;
+}
+
+export interface WebcamEffectsBake {
+	/** Untouched footage the copy was made from. */
+	originalPath: string;
+	outputPath: string;
+	effects: CameraFxSettings;
 }
 
 export const DEFAULT_CURSOR_SIZE = 3.0;

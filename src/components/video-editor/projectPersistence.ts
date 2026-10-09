@@ -9,6 +9,7 @@ import type {
 	GifFrameRate,
 	GifSizePreset,
 } from "@/lib/exporter";
+import { normalizeCameraFxSettings } from "@/lib/cameraFx/settings";
 import { isValidMp4FrameRate } from "@/lib/exporter/types";
 import {
 	TEMPORAL_MOTION_BLUR_DEFAULT_SAMPLE_COUNT,
@@ -81,7 +82,11 @@ import {
 	type ZoomRegion,
 	type ZoomTransitionEasing,
 } from "./types";
-import { convertLegacyWebcamRadiusToRoundness, normalizeWebcamCropRegion } from "./webcamOverlay";
+import {
+	convertLegacyWebcamRadiusToRoundness,
+	normalizeWebcamCropRegion,
+	normalizeWebcamEffectsBake,
+} from "./webcamOverlay";
 
 export const PROJECT_VERSION = 2;
 export const MACOS_DEFAULT_BORDER_RADIUS_PERCENT = 8;
@@ -1023,6 +1028,8 @@ export function normalizeProjectEditor(editor: Partial<ProjectEditorState>): Pro
 					? webcam.enabled
 					: DEFAULT_WEBCAM_OVERLAY.enabled,
 			sourcePath: webcamSourcePath,
+			effects: normalizeCameraFxSettings(webcam.effects),
+			effectsBake: normalizeWebcamEffectsBake(webcam.effectsBake, webcamSourcePath),
 			mirror:
 				typeof webcam.mirror === "boolean" ? webcam.mirror : DEFAULT_WEBCAM_OVERLAY.mirror,
 			cropRegion: normalizeWebcamCropRegion(webcam.cropRegion),

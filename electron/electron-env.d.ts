@@ -287,6 +287,9 @@ interface Window {
 			videoData: ArrayBuffer,
 			fileName: string,
 		) => Promise<{ success: boolean; path?: string; message?: string }>;
+		storeCameraFxVideo: (
+			videoData: ArrayBuffer,
+		) => Promise<{ success: boolean; path?: string; error?: string }>;
 		storeMicrophoneSidecar: (
 			audioData: ArrayBuffer,
 			videoPath: string,

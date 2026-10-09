@@ -1813,6 +1813,22 @@ export function registerRecordingHandlers(
 		}
 	});
 
+	// Camera effects output: a plain write next to the recordings, without the
+	// "new recording" side effects of store-recorded-video (current video path,
+	// project path, pruning).
+	ipcMain.handle("store-camera-fx-video", async (_, videoData: ArrayBuffer) => {
+		try {
+			const recordingsDir = await getRecordingsDir();
+			const videoPath = path.join(recordingsDir, `recording-${Date.now()}-webcam-fx.mp4`);
+			await fs.writeFile(videoPath, Buffer.from(videoData));
+			await rememberApprovedLocalReadPath(videoPath);
+			return { success: true as const, path: videoPath };
+		} catch (error) {
+			console.error("Failed to store camera effects video:", error);
+			return { success: false as const, error: String(error) };
+		}
+	});
+
 	ipcMain.handle("get-recorded-video-path", async () => {
 		try {
 			const recordingsDir = await getRecordingsDir();

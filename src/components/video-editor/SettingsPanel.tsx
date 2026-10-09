@@ -58,6 +58,7 @@ import type {
 	EditorEffectSection,
 	FigureData,
 	Padding,
+	WebcamEffectsBake,
 	WebcamOverlaySettings,
 	WebcamPositionPreset,
 	ZoomDepth,
@@ -97,6 +98,7 @@ import {
 	getCursorStyleSizeMultiplier,
 } from "./videoPlayback/uploadedCursorAssets";
 import { WebcamCropControl } from "./WebcamCropControl";
+import { WebcamEffectsPanel } from "./WebcamEffectsPanel";
 import {
 	getCropMatchedWebcamHeightPercent,
 	getWebcamPositionForPreset,
@@ -612,6 +614,8 @@ interface SettingsPanelProps {
 	onWebcamChange?: (webcam: WebcamOverlaySettings) => void;
 	onUploadWebcam?: () => void;
 	onClearWebcam?: () => void;
+	onWebcamEffectsBaked?: (bake: WebcamEffectsBake) => Promise<void>;
+	onRestoreWebcamOriginal?: () => Promise<void>;
 	padding?: Padding;
 	onPaddingChange?: (padding: Padding) => void;
 	cropRegion?: CropRegion;
@@ -1061,6 +1065,8 @@ export function SettingsPanel({
 	onWebcamChange,
 	onUploadWebcam,
 	onClearWebcam,
+	onWebcamEffectsBaked,
+	onRestoreWebcamOriginal,
 	padding = DEFAULT_PADDING,
 	onPaddingChange,
 	cropRegion,
@@ -3807,6 +3813,16 @@ export function SettingsPanel({
 									</div>
 								</div>
 							</div>
+							{webcam?.sourcePath ? (
+								<WebcamEffectsPanel
+									webcam={webcam}
+									currentTime={webcamPreviewCurrentTime}
+									playing={webcamPreviewPlaying}
+									onChange={updateWebcam}
+									onBaked={onWebcamEffectsBaked}
+									onRestoreOriginal={onRestoreWebcamOriginal}
+								/>
+							) : null}
 						</div>
 					</section>
 				);

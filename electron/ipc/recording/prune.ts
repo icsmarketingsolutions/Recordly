@@ -74,12 +74,19 @@ async function loadSavedProjectMediaPaths() {
 				const projectPath = path.join(projectsDir, entry.name);
 				let rawProject: {
 					videoPath?: unknown;
-					editor?: { webcam?: { sourcePath?: unknown } };
+					editor?: {
+						webcam?: { sourcePath?: unknown; effectsBake?: { originalPath?: unknown } };
+					};
 				};
 				try {
 					rawProject = parseJsonWithByteOrderMark<{
 						videoPath?: unknown;
-						editor?: { webcam?: { sourcePath?: unknown } };
+						editor?: {
+							webcam?: {
+								sourcePath?: unknown;
+								effectsBake?: { originalPath?: unknown };
+							};
+						};
 					}>(await fs.readFile(projectPath, "utf-8"));
 				} catch (error) {
 					console.warn(
@@ -94,6 +101,8 @@ async function loadSavedProjectMediaPaths() {
 				const candidatePaths = [
 					rawProject.videoPath,
 					rawProject.editor?.webcam?.sourcePath,
+					// Camera effects keep the untouched footage so they can be redone.
+					rawProject.editor?.webcam?.effectsBake?.originalPath,
 				];
 
 				for (const candidatePath of candidatePaths) {

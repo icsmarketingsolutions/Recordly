@@ -68,7 +68,7 @@ type PartialEditorControls = Partial<PersistedEditorControls>;
 
 type PresetAutoCaptionSettings = ProjectEditorState["autoCaptionSettings"];
 type PresetCropRegion = ProjectEditorState["cropRegion"];
-type PresetWebcamSettings = Omit<ProjectEditorState["webcam"], "sourcePath">;
+type PresetWebcamSettings = Omit<ProjectEditorState["webcam"], "sourcePath" | "effectsBake">;
 
 export interface EditorPresetSnapshot extends Omit<PersistedEditorControls, "webcam"> {
 	borderRadiusUnit: "percent";
@@ -220,7 +220,11 @@ function normalizeEditorPresetSnapshot(candidate: unknown): EditorPresetSnapshot
 		normalizedPreferences,
 		normalizedPreferences,
 	);
-	const { sourcePath: _sourcePath, ...webcam } = normalizedControls.webcam;
+	const {
+		sourcePath: _sourcePath,
+		effectsBake: _effectsBake,
+		...webcam
+	} = normalizedControls.webcam;
 
 	return {
 		...normalizedControls,
