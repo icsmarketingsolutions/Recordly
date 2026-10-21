@@ -165,6 +165,7 @@
 		"saveProject": "保存项目"
 	},
 	"exportTips": {
+		"softwareGpu": "本次会话已关闭 GPU 加速（软件渲染），导出会非常慢。请重启 Recordly 以全速导出。",
 		"autoZooms": "提示：可在设置中关闭自动应用的缩放",
 		"experimentalBuilds": "提示：可在设置中开启实验版本访问权限",
 		"cursorAppearance": "提示：你可以自定义光标外观"

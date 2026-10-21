@@ -165,6 +165,7 @@
 		"saveProject": "Salvar projeto"
 	},
 	"exportTips": {
+		"softwareGpu": "A aceleração de GPU está desligada nesta sessão (renderização por software): esta exportação será muito lenta. Reinicie o Recordly para exportar na velocidade normal.",
 		"autoZooms": "Dica: Desative os zooms aplicados automaticamente nas configurações",
 		"experimentalBuilds": "Dica: Ative o acesso a versões experimentais nas configurações",
 		"cursorAppearance": "Dica: Você pode personalizar a aparência do cursor"

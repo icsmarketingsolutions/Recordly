@@ -23,8 +23,12 @@ describe("backendPolicy", () => {
 		expect(shouldPreferNativeAutoBackend("unknown")).toBe(false);
 	});
 
-	it("keeps Lightning exports on the stable WebGL renderer by default", () => {
-		expect(getDefaultLightningRenderBackend()).toBe("webgl");
+	it("prefers WebGPU on Windows and macOS and keeps Linux on WebGL", () => {
+		expect(getDefaultLightningRenderBackend("Windows NT 10.0", true)).toBe("webgpu");
+		expect(getDefaultLightningRenderBackend("Macintosh", true)).toBe("webgpu");
+		expect(getDefaultLightningRenderBackend("X11; Linux x86_64", true)).toBe("webgl");
+		expect(getDefaultLightningRenderBackend("Windows NT 10.0", false)).toBe("webgl");
+		expect(getDefaultLightningRenderBackend(null, true)).toBe("webgl");
 	});
 
 	it("keeps Windows auto exports on the streaming route by default", () => {

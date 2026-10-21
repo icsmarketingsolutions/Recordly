@@ -165,6 +165,7 @@
 		"saveProject": "Enregistrer le projet"
 	},
 	"exportTips": {
+		"softwareGpu": "L'accélération GPU est désactivée dans cette session (rendu logiciel) : cet export sera très lent. Redémarrez Recordly pour exporter à pleine vitesse.",
 		"autoZooms": "Astuce : Désactivez les zooms automatiques dans les paramètres",
 		"experimentalBuilds": "Astuce : Activez l’accès aux versions expérimentales dans les paramètres",
 		"cursorAppearance": "Astuce : Vous pouvez personnaliser l’apparence du curseur"

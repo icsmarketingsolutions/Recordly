@@ -1,5 +1,7 @@
 import { useCallback, useRef } from "react";
 import { toast } from "@/components/ui/toast";
+import { useI18n } from "@/contexts/I18nContext";
+import { readGpuRunsInSoftware } from "./gpuHealth";
 import { getMp4ExportBitrate } from "@/lib/exporter/exportBitrate";
 import { DEFAULT_MP4_CODEC } from "@/lib/exporter/mp4Support";
 import type { ExportSettings } from "@/lib/exporter/types";
@@ -23,6 +25,9 @@ import {
 export function useExportRunner(input: ExportRunnerInput) {
 	const inputRef = useRef(input);
 	inputRef.current = input;
+	const { t } = useI18n();
+	const tRef = useRef(t);
+	tRef.current = t;
 	const showExportSuccessToast = useExportSuccessToast();
 
 	const handleExport = useCallback(
@@ -50,6 +55,16 @@ export function useExportRunner(input: ExportRunnerInput) {
 				nvidiaCudaExportAvailable,
 				remountPreview,
 			} = inputRef.current;
+			// A GPU process that fell back to software rendering makes every frame crawl;
+			// say so up front instead of letting the export run for an hour.
+			if (!smokeExportConfig.enabled && (await readGpuRunsInSoftware())) {
+				toast.warning(
+					tRef.current(
+						"editor.exportTips.softwareGpu",
+						"GPU acceleration is off in this session (software rendering), so this export will be very slow. Restart Recordly to export at full speed.",
+					),
+				);
+			}
 			const { shadowIntensity, padding } = appearance;
 			const { audioRegions, clipRegions, selectedClipId } = timeline;
 			const {

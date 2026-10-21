@@ -146,6 +146,16 @@ export function planLightningExportRoutes(options: {
 	return { selectedRoute: "webcodecs", decisions };
 }
 
-export function getDefaultLightningRenderBackend(): ExportRenderBackend {
-	return "webgl";
+// WebGPU renders measurably faster than WebGL on Windows and macOS GPUs (the fork
+// measured 82 vs 47 fps at 1080p60 on an RTX 5050), but Pixi's WebGPU bind-group
+// path can crash mid-render on Linux Chromium, so Linux stays on WebGL.
+export function getDefaultLightningRenderBackend(
+	platformHint: string | null | undefined = typeof navigator !== "undefined"
+		? navigator.userAgent
+		: null,
+	hasWebGpu: boolean = typeof navigator !== "undefined" && "gpu" in navigator,
+): ExportRenderBackend {
+	if (!hasWebGpu) return "webgl";
+	const platform = normalizeLightningRuntimePlatform(platformHint);
+	return platform === "win32" || platform === "darwin" ? "webgpu" : "webgl";
 }

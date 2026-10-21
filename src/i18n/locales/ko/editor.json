@@ -166,6 +166,7 @@
 		"saveProject": "프로젝트 저장"
 	},
 	"exportTips": {
+		"softwareGpu": "이 세션에서는 GPU 가속이 꺼져 있어(소프트웨어 렌더링) 내보내기가 매우 느립니다. Recordly를 다시 시작하면 정상 속도로 내보낼 수 있습니다.",
 		"autoZooms": "팁: 설정에서 자동 적용 확대를 끌 수 있습니다",
 		"experimentalBuilds": "팁: 설정에서 실험적 빌드 액세스를 켜 보세요",
 		"cursorAppearance": "팁: 커서 모양을 사용자 지정할 수 있습니다"

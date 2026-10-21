@@ -166,6 +166,7 @@
 		"saveProject": "Project opslaan"
 	},
 	"exportTips": {
+		"softwareGpu": "GPU-versnelling staat uit in deze sessie (softwarerendering), dus dit exporteren wordt erg traag. Start Recordly opnieuw om op volle snelheid te exporteren.",
 		"autoZooms": "Tip: Schakel automatisch toegepaste zooms uit in de instellingen",
 		"experimentalBuilds": "Tip: Schakel toegang tot experimentele builds in via de instellingen",
 		"cursorAppearance": "Tip: Je kunt het uiterlijk van je cursor aanpassen"
