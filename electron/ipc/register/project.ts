@@ -33,9 +33,7 @@ import {
 } from "../project/manager";
 import { persistRecordingSessionManifest, resolveRecordingSession } from "../project/session";
 import {
-	currentProjectPath,
-	currentRecordingSession,
-	currentVideoPath,
+	getEditorContext,
 	setCurrentProjectPath,
 	setCurrentRecordingSession,
 	setCurrentVideoPath,
@@ -222,7 +220,7 @@ async function ensureNamedProjectSaveDoesNotOverwriteDifferentProject(
 }
 
 export function registerProjectHandlers() {
-	ipcMain.handle("rename-library-project", async (_, source: string, name: string) => {
+	ipcMain.handle("rename-library-project", async (event, source: string, name: string) => {
 		try {
 			const entries = await listProjectLibraryEntries();
 			const target = await renameLibraryProject(
@@ -231,8 +229,9 @@ export function registerProjectHandlers() {
 				entries.entries.map((entry) => entry.path),
 				(value) => [getProjectThumbnailPath(value), getProjectBackupPath(value)],
 			);
-			if (currentProjectPath && normalizePath(currentProjectPath) === normalizePath(source))
-				setCurrentProjectPath(target);
+			const { projectPath: activeProjectPath } = getEditorContext(event.sender);
+			if (activeProjectPath && normalizePath(activeProjectPath) === normalizePath(source))
+				setCurrentProjectPath(target, event.sender);
 			const warning = await persistRecentMetadata(() => rememberRecentProject(target));
 			return { success: true, path: target, warning };
 		} catch (error) {
@@ -448,7 +447,7 @@ export function registerProjectHandlers() {
 	ipcMain.handle(
 		"save-project-file",
 		async (
-			_,
+			event,
 			projectData: unknown,
 			suggestedName?: string,
 			existingProjectPath?: string,
@@ -461,7 +460,10 @@ export function registerProjectHandlers() {
 					existingProjectPath &&
 					path.extname(existingProjectPath).toLowerCase() ===
 						`.${PROJECT_FILE_EXTENSION}` &&
-					(isTrustedProjectPath(existingProjectPath) ||
+					(isTrustedProjectPath(
+						existingProjectPath,
+						getEditorContext(event.sender).projectPath,
+					) ||
 						isPathInsideDirectory(existingProjectPath, projectsDir))
 						? path.resolve(existingProjectPath)
 						: null;
@@ -471,7 +473,7 @@ export function registerProjectHandlers() {
 						trustedExistingProjectPath,
 						JSON.stringify(preparedProject.projectData, null, 2),
 					);
-					setCurrentProjectPath(trustedExistingProjectPath);
+					setCurrentProjectPath(trustedExistingProjectPath, event.sender);
 					await saveProjectThumbnail(trustedExistingProjectPath, thumbnailDataUrl);
 					await rememberRecentProject(trustedExistingProjectPath);
 					return {
@@ -515,7 +517,7 @@ export function registerProjectHandlers() {
 					result.filePath,
 					JSON.stringify(preparedProject.projectData, null, 2),
 				);
-				setCurrentProjectPath(result.filePath);
+				setCurrentProjectPath(result.filePath, event.sender);
 				await saveProjectThumbnail(result.filePath, thumbnailDataUrl);
 				await rememberRecentProject(result.filePath);
 
@@ -539,7 +541,7 @@ export function registerProjectHandlers() {
 	ipcMain.handle(
 		"save-project-file-named",
 		async (
-			_,
+			event,
 			projectData: unknown,
 			projectName: string,
 			thumbnailDataUrl?: string | null,
@@ -556,8 +558,9 @@ export function registerProjectHandlers() {
 
 				const projectsDir = await getProjectsDir();
 				const namedSaveMode = normalizeNamedProjectSaveMode(mode);
-				const activeProjectPath = isTrustedProjectPath(currentProjectPath)
-					? currentProjectPath
+				const { projectPath: windowProjectPath } = getEditorContext(event.sender);
+				const activeProjectPath = isTrustedProjectPath(windowProjectPath, windowProjectPath)
+					? windowProjectPath
 					: null;
 				const targetProjectPath = path.join(
 					projectsDir,
@@ -624,7 +627,7 @@ export function registerProjectHandlers() {
 					await saveRecentProjectPaths(filteredRecentProjectPaths);
 				}
 
-				setCurrentProjectPath(targetProjectPath);
+				setCurrentProjectPath(targetProjectPath, event.sender);
 
 				return {
 					success: true,
@@ -643,7 +646,7 @@ export function registerProjectHandlers() {
 		},
 	);
 
-	ipcMain.handle("load-project-file", async () => {
+	ipcMain.handle("load-project-file", async (event) => {
 		try {
 			const projectsDir = await getProjectsDir();
 			const result = await dialog.showOpenDialog({
@@ -664,7 +667,7 @@ export function registerProjectHandlers() {
 				return { success: false, canceled: true, message: "Open project canceled" };
 			}
 
-			return await loadProjectFromPath(result.filePaths[0]);
+			return await loadProjectFromPath(result.filePaths[0], event.sender);
 		} catch (error) {
 			console.error("Failed to load project file:", error);
 			return {
@@ -675,13 +678,14 @@ export function registerProjectHandlers() {
 		}
 	});
 
-	ipcMain.handle("load-current-project-file", async () => {
+	ipcMain.handle("load-current-project-file", async (event) => {
 		try {
-			if (!currentProjectPath) {
+			const { projectPath: activeProjectPath } = getEditorContext(event.sender);
+			if (!activeProjectPath) {
 				return { success: false, message: "No active project" };
 			}
 
-			return await loadProjectFromPath(currentProjectPath);
+			return await loadProjectFromPath(activeProjectPath, event.sender);
 		} catch (error) {
 			console.error("Failed to load current project file:", error);
 			return {
@@ -708,14 +712,14 @@ export function registerProjectHandlers() {
 
 	ipcMain.handle(
 		"create-project-file",
-		async (_, projectData: unknown, thumbnailDataUrl?: string | null) => {
+		async (event, projectData: unknown, thumbnailDataUrl?: string | null) => {
 			try {
 				const prepared = ensureProjectDataHasProjectId(projectData);
 				const target = await createUntitledProject(
 					await getProjectsDir(),
 					JSON.stringify(prepared.projectData, null, 2),
 				);
-				setCurrentProjectPath(target);
+				setCurrentProjectPath(target, event.sender);
 				const warning = await persistRecentMetadata(() => rememberRecentProject(target));
 				try {
 					await saveProjectThumbnail(target, thumbnailDataUrl);
@@ -728,15 +732,16 @@ export function registerProjectHandlers() {
 			}
 		},
 	);
-	ipcMain.handle("trash-project-files", async (_, paths: unknown) => {
+	ipcMain.handle("trash-project-files", async (event, paths: unknown) => {
 		try {
 			const result = await trashLibraryProjects(paths, {
 				list: listProjectLibraryEntries,
 				trash: (filePath) => shell.trashItem(filePath),
 				thumbnailPath: getProjectThumbnailPath,
 			});
-			if (currentProjectPath && result.deleted.includes(path.resolve(currentProjectPath)))
-				setCurrentProjectPath(null);
+			const { projectPath: activeProjectPath } = getEditorContext(event.sender);
+			if (activeProjectPath && result.deleted.includes(path.resolve(activeProjectPath)))
+				setCurrentProjectPath(null, event.sender);
 			const warning = await persistRecentMetadata(async () =>
 				saveRecentProjectPaths(
 					(await loadRecentProjectPaths()).filter(
@@ -771,9 +776,9 @@ export function registerProjectHandlers() {
 		}
 	});
 
-	ipcMain.handle("open-project-file-at-path", async (_, filePath: string) => {
+	ipcMain.handle("open-project-file-at-path", async (event, filePath: string) => {
 		try {
-			return await loadProjectFromPath(filePath);
+			return await loadProjectFromPath(filePath, event.sender);
 		} catch (error) {
 			console.error("Failed to open project file at path:", error);
 			return {
@@ -809,14 +814,15 @@ export function registerProjectHandlers() {
 	ipcMain.handle(
 		"set-current-video-path",
 		async (
-			_,
+			event,
 			path: string,
 			options?: { preserveProjectPath?: boolean; hideOverlayCursorByDefault?: boolean },
 		) => {
-			setCurrentVideoPath(normalizeVideoSourcePath(path) ?? path);
-			approveUserPath(currentVideoPath);
-			const resolvedSession = (await resolveRecordingSession(currentVideoPath)) ?? {
-				videoPath: currentVideoPath!,
+			const nextVideoPath = normalizeVideoSourcePath(path) ?? path;
+			setCurrentVideoPath(nextVideoPath, event.sender);
+			approveUserPath(nextVideoPath);
+			const resolvedSession = (await resolveRecordingSession(nextVideoPath)) ?? {
+				videoPath: nextVideoPath,
 				webcamPath: null,
 				timeOffsetMs: 0,
 			};
@@ -828,7 +834,7 @@ export function registerProjectHandlers() {
 					normalizeBoolean(resolvedSession.hideOverlayCursorByDefault),
 			};
 
-			setCurrentRecordingSession(nextSession);
+			setCurrentRecordingSession(nextSession, event.sender);
 			await replaceApprovedSessionLocalReadPaths([
 				resolvedSession.videoPath,
 				resolvedSession.webcamPath,
@@ -839,7 +845,7 @@ export function registerProjectHandlers() {
 			}
 
 			if (!options?.preserveProjectPath) {
-				setCurrentProjectPath(null);
+				setCurrentProjectPath(null, event.sender);
 			}
 
 			for (const window of BrowserWindow.getAllWindows()) {
@@ -855,7 +861,7 @@ export function registerProjectHandlers() {
 	ipcMain.handle(
 		"set-current-recording-session",
 		async (
-			_,
+			event,
 			session: {
 				videoPath: string;
 				webcamPath?: string | null;
@@ -866,23 +872,24 @@ export function registerProjectHandlers() {
 		) => {
 			const normalizedVideoPath =
 				normalizeVideoSourcePath(session.videoPath) ?? session.videoPath;
-			setCurrentVideoPath(normalizedVideoPath);
-			setCurrentRecordingSession({
+			const nextSession = {
 				videoPath: normalizedVideoPath,
 				webcamPath: normalizeVideoSourcePath(session.webcamPath ?? null),
 				timeOffsetMs: normalizeRecordingTimeOffsetMs(session.timeOffsetMs),
 				hideOverlayCursorByDefault: normalizeBoolean(session.hideOverlayCursorByDefault),
-			});
-			await rememberApprovedLocalReadPath(currentRecordingSession!.videoPath);
-			await rememberApprovedLocalReadPath(currentRecordingSession!.webcamPath);
+			};
+			setCurrentVideoPath(normalizedVideoPath, event.sender);
+			setCurrentRecordingSession(nextSession, event.sender);
+			await rememberApprovedLocalReadPath(nextSession.videoPath);
+			await rememberApprovedLocalReadPath(nextSession.webcamPath);
 			if (!options?.preserveProjectPath) {
-				setCurrentProjectPath(null);
+				setCurrentProjectPath(null, event.sender);
 			}
-			await persistRecordingSessionManifest(currentRecordingSession!);
+			await persistRecordingSessionManifest(nextSession);
 
 			for (const window of BrowserWindow.getAllWindows()) {
 				if (!window.isDestroyed()) {
-					window.webContents.send("recording-session-changed", currentRecordingSession);
+					window.webContents.send("recording-session-changed", nextSession);
 				}
 			}
 
@@ -890,28 +897,30 @@ export function registerProjectHandlers() {
 		},
 	);
 
-	ipcMain.handle("get-current-recording-session", () => {
-		if (!currentRecordingSession) {
+	ipcMain.handle("get-current-recording-session", (event) => {
+		const { recordingSession } = getEditorContext(event.sender);
+		if (!recordingSession) {
 			return { success: false };
 		}
 
 		return {
 			success: true,
-			session: currentRecordingSession,
+			session: recordingSession,
 		};
 	});
 
-	ipcMain.handle("get-current-video-path", () => {
-		return currentVideoPath ? { success: true, path: currentVideoPath } : { success: false };
+	ipcMain.handle("get-current-video-path", (event) => {
+		const { videoPath } = getEditorContext(event.sender);
+		return videoPath ? { success: true, path: videoPath } : { success: false };
 	});
 
-	ipcMain.handle("clear-current-video-path", () => {
-		setCurrentVideoPath(null);
-		setCurrentRecordingSession(null);
+	ipcMain.handle("clear-current-video-path", (event) => {
+		setCurrentVideoPath(null, event.sender);
+		setCurrentRecordingSession(null, event.sender);
 		return { success: true };
 	});
 
-	ipcMain.handle("delete-recording-file", async (_, filePath: string) => {
+	ipcMain.handle("delete-recording-file", async (event, filePath: string) => {
 		try {
 			if (!filePath) {
 				return { success: false, error: "Only auto-generated recordings can be deleted" };
@@ -951,12 +960,13 @@ export function registerProjectHandlers() {
 			) {
 				setWindowsPendingVideoPath(null);
 			}
-			const currentResolved = currentVideoPath
-				? await fs.realpath(currentVideoPath).catch(() => currentVideoPath)
+			const { videoPath: activeVideoPath } = getEditorContext(event.sender);
+			const currentResolved = activeVideoPath
+				? await fs.realpath(activeVideoPath).catch(() => activeVideoPath)
 				: null;
 			if (currentResolved === resolvedPath) {
-				setCurrentVideoPath(null);
-				setCurrentRecordingSession(null);
+				setCurrentVideoPath(null, event.sender);
+				setCurrentRecordingSession(null, event.sender);
 			}
 			return { success: true };
 		} catch (error) {

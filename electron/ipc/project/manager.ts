@@ -176,7 +176,8 @@ export async function replaceApprovedSessionLocalReadPaths(
 		}
 	}
 
-	approvedLocalReadPaths.clear();
+	// Several editor windows may be open on different projects, so approvals from
+	// earlier sessions stay valid instead of being replaced.
 	for (const approvedPath of nextApprovedPaths) {
 		approvedLocalReadPaths.add(approvedPath);
 	}
@@ -509,7 +510,10 @@ export async function readProjectPreview(projectPath: string): Promise<ProjectPr
 	};
 }
 
-export async function loadProjectFromPath(projectPath: string) {
+export async function loadProjectFromPath(
+	projectPath: string,
+	sender?: Electron.WebContents | null,
+) {
 	const normalizedPath = normalizePath(projectPath);
 	let project: unknown;
 	try {
@@ -563,13 +567,16 @@ export async function loadProjectFromPath(projectPath: string) {
 	await replaceApprovedSessionLocalReadPaths(approvedProjectPaths);
 	await rememberRecentProject(normalizedPath);
 
-	setCurrentProjectPath(normalizedPath);
-	setCurrentVideoPath(mediaSources.videoPath);
-	setCurrentRecordingSession({
-		videoPath: mediaSources.videoPath,
-		webcamPath: mediaSources.webcamPath,
-		timeOffsetMs: 0,
-	} as RecordingSessionData);
+	setCurrentProjectPath(normalizedPath, sender);
+	setCurrentVideoPath(mediaSources.videoPath, sender);
+	setCurrentRecordingSession(
+		{
+			videoPath: mediaSources.videoPath,
+			webcamPath: mediaSources.webcamPath,
+			timeOffsetMs: 0,
+		} as RecordingSessionData,
+		sender,
+	);
 
 	return {
 		success: true,
@@ -578,7 +585,10 @@ export async function loadProjectFromPath(projectPath: string) {
 	};
 }
 
-export function isTrustedProjectPath(filePath?: string | null): boolean {
-	if (!filePath || !currentProjectPath) return false;
-	return normalizePath(filePath) === normalizePath(currentProjectPath);
+export function isTrustedProjectPath(
+	filePath?: string | null,
+	activeProjectPath: string | null | undefined = currentProjectPath,
+): boolean {
+	if (!filePath || !activeProjectPath) return false;
+	return normalizePath(filePath) === normalizePath(activeProjectPath);
 }

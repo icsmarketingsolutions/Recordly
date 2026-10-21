@@ -91,7 +91,7 @@ import {
 import {
 	cachedSystemCursorAssets,
 	cachedSystemCursorAssetsSourceMtimeMs,
-	currentVideoPath,
+	getEditorContext,
 	ffmpegCaptureOutputBuffer,
 	ffmpegCaptureProcess,
 	ffmpegCaptureTargetPath,
@@ -1955,8 +1955,10 @@ export function registerRecordingHandlers(
 		return { success: true };
 	});
 
-	ipcMain.handle("get-cursor-telemetry", async (_, videoPath?: string) => {
-		const targetVideoPath = normalizeVideoSourcePath(videoPath ?? currentVideoPath);
+	ipcMain.handle("get-cursor-telemetry", async (event, videoPath?: string) => {
+		const targetVideoPath = normalizeVideoSourcePath(
+			videoPath ?? getEditorContext(event.sender).videoPath,
+		);
 		if (!targetVideoPath) {
 			return { success: true, samples: [] };
 		}
@@ -1985,8 +1987,10 @@ export function registerRecordingHandlers(
 
 	ipcMain.handle(
 		"set-cursor-telemetry",
-		async (_, videoPath: string | undefined, samples: CursorTelemetryPoint[]) => {
-			const targetVideoPath = normalizeVideoSourcePath(videoPath ?? currentVideoPath);
+		async (event, videoPath: string | undefined, samples: CursorTelemetryPoint[]) => {
+			const targetVideoPath = normalizeVideoSourcePath(
+				videoPath ?? getEditorContext(event.sender).videoPath,
+			);
 			if (!targetVideoPath) {
 				return {
 					success: false,

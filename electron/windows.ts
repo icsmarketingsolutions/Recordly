@@ -1,5 +1,5 @@
 import { resolveEditorStartupView } from "./editorStartupView";
-import { currentProjectPath, currentVideoPath, currentRecordingSession } from "./ipc/state";
+import { bindEditorContext, getEditorContext } from "./ipc/state";
 import { isHudInEditorMode } from "./hudEditorMode";
 import fs from "node:fs";
 import { createRequire } from "node:module";
@@ -59,10 +59,11 @@ const CAPTURE_PICKER_READY_TIMEOUT_MS = 1500;
 // Synchronous and metadata-only so the HTML boot shell matches its destination,
 // including reloads of a Home window after a fresh recording finishes.
 ipcMain.on("get-editor-startup-view", (event) => {
+	const context = getEditorContext(event.sender);
 	event.returnValue = resolveEditorStartupView({
-		projectPath: currentProjectPath,
-		videoPath: currentVideoPath,
-		recordingVideoPath: currentRecordingSession?.videoPath,
+		projectPath: context.projectPath,
+		videoPath: context.videoPath,
+		recordingVideoPath: context.recordingSession?.videoPath,
 		devInput: process.env.RECORDLY_DEV_OPEN_RECORDING_INPUT,
 		smokeExport: process.env.RECORDLY_SMOKE_EXPORT === "1",
 	});
@@ -997,6 +998,9 @@ export function createEditorWindow(): BrowserWindow {
 			backgroundThrottling: false,
 		},
 	});
+	// Each editor window keeps the recording/project it was opened for, even after
+	// another window moves the app-wide "current" values on.
+	bindEditorContext(win.webContents);
 
 	recordingPreparationActive = false;
 	editorWindows.add(win);

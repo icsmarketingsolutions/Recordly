@@ -179,7 +179,8 @@ let sourceSelectorWindow: BrowserWindow | null = null;
 let tray: Tray | null = null;
 let trayContextMenu: Menu | null = null;
 let selectedSourceName = "";
-let editorHasUnsavedChanges = false;
+// Unsaved state is tracked per editor window: several can be open at once.
+const editorUnsavedChanges = new WeakMap<BrowserWindow, boolean>();
 let isForceClosing = false;
 let isAppQuitting = false;
 let isCreatingMainWindow = false;
@@ -205,7 +206,7 @@ function closeEditorWindowBypassingUnsavedPrompt(window: BrowserWindow | null) {
 
 	if (isEditorWindow(window)) {
 		isForceClosing = true;
-		editorHasUnsavedChanges = false;
+		editorUnsavedChanges.set(window, false);
 	}
 	window.close();
 }
@@ -222,7 +223,15 @@ function closeEditorWindowToHud(window: BrowserWindow | null) {
 	if (mainWindow === window) {
 		mainWindow = null;
 	}
-	createWindow();
+	const otherEditor = BrowserWindow.getAllWindows().find(
+		(candidate) =>
+			candidate !== window && !candidate.isDestroyed() && isEditorWindow(candidate),
+	);
+	if (otherEditor) {
+		mainWindow = otherEditor;
+	} else {
+		createWindow();
+	}
 	closeEditorWindowBypassingUnsavedPrompt(window);
 }
 
@@ -310,8 +319,9 @@ function showHudOverlayFromTray() {
 	return true;
 }
 
-ipcMain.on("set-has-unsaved-changes", (_event, hasChanges: boolean) => {
-	editorHasUnsavedChanges = hasChanges;
+ipcMain.on("set-has-unsaved-changes", (event, hasChanges: boolean) => {
+	const window = BrowserWindow.fromWebContents(event.sender);
+	if (window) editorUnsavedChanges.set(window, hasChanges);
 });
 
 function createWindow() {
@@ -418,6 +428,30 @@ function focusOrCreateMainWindow() {
 
 function isEditorWindow(window: BrowserWindow) {
 	return window.webContents.getURL().includes("windowType=editor");
+}
+
+// Launching Recordly again while an editor is open used to just focus that editor.
+// Now it brings up the HUD so another recording can start without closing anything;
+// when that recording ends it opens in a second editor window.
+function openHudForNewRecording() {
+	if (!app.isReady()) {
+		void app.whenReady().then(() => openHudForNewRecording());
+		return;
+	}
+	const editor =
+		mainWindow && !mainWindow.isDestroyed() && isEditorWindow(mainWindow) ? mainWindow : null;
+	if (!editor) {
+		focusOrCreateMainWindow();
+		return;
+	}
+	const existingHud = getHudOverlayWindow();
+	if (existingHud && !existingHud.isDestroyed()) {
+		mainWindow = existingHud;
+		restoreWindowSafely(existingHud);
+		return;
+	}
+	mainWindow = null;
+	createWindow();
 }
 
 function sendEditorMenuAction(
@@ -554,7 +588,7 @@ function createTray() {
 			return;
 		}
 
-		focusOrCreateMainWindow();
+		openHudForNewRecording();
 	});
 
 	if (process.platform === "win32") {
@@ -568,7 +602,7 @@ function createTray() {
 		return;
 	}
 
-	tray.on("double-click", () => focusOrCreateMainWindow());
+	tray.on("double-click", () => openHudForNewRecording());
 }
 
 function shouldUseTray() {
@@ -762,58 +796,37 @@ function updateTrayMenu(recording: boolean = false) {
 	}
 }
 
+// Every finished recording gets its own editor window; editors that are already
+// open stay open, so several recordings can be edited side by side.
 function createEditorWindowWrapper() {
-	const existingEditorWindow = getExistingEditorWindow();
-	if (existingEditorWindow) {
-		mainWindow = existingEditorWindow;
-		restoreWindowSafely(existingEditorWindow);
-		return existingEditorWindow;
-	}
-
 	if (isCreatingEditorWindow) {
 		const currentWindow = mainWindow;
 		if (currentWindow && !currentWindow.isDestroyed()) {
 			return currentWindow;
 		}
-
-		const currentEditorWindow = getExistingEditorWindow();
-		if (currentEditorWindow) {
-			mainWindow = currentEditorWindow;
-			return currentEditorWindow;
-		}
 	}
 
 	isCreatingEditorWindow = true;
 	const previousWindow = mainWindow;
-	if (previousWindow && !previousWindow.isDestroyed()) {
-		const closingEditorWindow = isEditorWindow(previousWindow);
-
-		if (closingEditorWindow) {
-			closeEditorWindowBypassingUnsavedPrompt(previousWindow);
-		} else {
-			// It's the HUD or another window. Hide it instead of closing so background
-			// tasks (like webcam finalizing) can finish in its renderer process.
-			previousWindow.hide();
-		}
-
-		if (!closingEditorWindow) {
-			isForceClosing = false;
-		}
-		if (mainWindow === previousWindow) {
-			mainWindow = null;
-		}
+	if (previousWindow && !previousWindow.isDestroyed() && !isEditorWindow(previousWindow)) {
+		// It's the HUD or another window. Hide it instead of closing so background
+		// tasks (like webcam finalizing) can finish in its renderer process.
+		previousWindow.hide();
+		isForceClosing = false;
+	}
+	if (mainWindow === previousWindow) {
+		mainWindow = null;
 	}
 	const editorWindow = createEditorWindow();
 	mainWindow = editorWindow;
-	editorHasUnsavedChanges = false;
+	editorUnsavedChanges.set(editorWindow, false);
 
 	editorWindow.on("closed", () => {
 		if (mainWindow === editorWindow) {
-			mainWindow = null;
+			mainWindow = getExistingEditorWindow();
 		}
 		isCreatingEditorWindow = false;
 		isForceClosing = false;
-		editorHasUnsavedChanges = false;
 	});
 
 	const closeAfterSave = () => {
@@ -850,7 +863,7 @@ function createEditorWindowWrapper() {
 	});
 	editorWindow.once("closed", closeSave.dispose);
 	editorWindow.on("close", (event) => {
-		if (isForceClosing || !editorHasUnsavedChanges) {
+		if (isForceClosing || !editorUnsavedChanges.get(editorWindow)) {
 			if (process.platform === "win32" && !isForceClosing && !isAppQuitting) {
 				event.preventDefault();
 				closeEditorWindowToHud(editorWindow);
@@ -902,7 +915,7 @@ app.on("activate", () => {
 app.on("second-instance", (_event, commandLine) => {
 	const authCallback = authCallbacks.find(commandLine);
 	if (authCallback) authCallbacks.dispatch(authCallback);
-	focusOrCreateMainWindow();
+	openHudForNewRecording();
 });
 
 // Register all IPC handlers when app is ready

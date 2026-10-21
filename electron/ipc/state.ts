@@ -112,14 +112,55 @@ export type { CursorInteractionType, CursorTelemetryPoint };
 export function setSelectedSource(v: SelectedSource | null) {
 	selectedSource = v;
 }
-export function setCurrentProjectPath(v: string | null) {
+// Several editor windows can be open at once, each on its own recording and
+// project. The globals above describe the most recent one (they seed the next
+// window); handlers resolve the window that called them through its WebContents.
+export interface EditorContext {
+	projectPath: string | null;
+	videoPath: string | null;
+	recordingSession: RecordingSessionData | null;
+}
+const editorContexts = new WeakMap<Electron.WebContents, EditorContext>();
+
+export function bindEditorContext(contents: Electron.WebContents, context?: EditorContext) {
+	editorContexts.set(
+		contents,
+		context ?? {
+			projectPath: currentProjectPath,
+			videoPath: currentVideoPath,
+			recordingSession: currentRecordingSession,
+		},
+	);
+}
+
+export function getEditorContext(sender?: Electron.WebContents | null): EditorContext {
+	const bound = sender ? editorContexts.get(sender) : undefined;
+	return (
+		bound ?? {
+			projectPath: currentProjectPath,
+			videoPath: currentVideoPath,
+			recordingSession: currentRecordingSession,
+		}
+	);
+}
+
+export function setCurrentProjectPath(v: string | null, sender?: Electron.WebContents | null) {
 	currentProjectPath = v;
+	const bound = sender ? editorContexts.get(sender) : undefined;
+	if (bound) bound.projectPath = v;
 }
-export function setCurrentVideoPath(v: string | null) {
+export function setCurrentVideoPath(v: string | null, sender?: Electron.WebContents | null) {
 	currentVideoPath = v;
+	const bound = sender ? editorContexts.get(sender) : undefined;
+	if (bound) bound.videoPath = v;
 }
-export function setCurrentRecordingSession(v: RecordingSessionData | null) {
+export function setCurrentRecordingSession(
+	v: RecordingSessionData | null,
+	sender?: Electron.WebContents | null,
+) {
 	currentRecordingSession = v;
+	const bound = sender ? editorContexts.get(sender) : undefined;
+	if (bound) bound.recordingSession = v;
 }
 
 export function setNativeScreenRecordingActive(v: boolean) {
