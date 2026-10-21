@@ -10,7 +10,7 @@ const listPages = async () =>
 
 async function connect(target) {
 	const ws = new WebSocket(target.webSocketDebuggerUrl);
-	await new Promise((r) => (ws.onopen = r));
+	await new Promise((r) => ws.addEventListener("open", r));
 	let id = 0;
 	const pending = new Map();
 	ws.onmessage = (e) => {

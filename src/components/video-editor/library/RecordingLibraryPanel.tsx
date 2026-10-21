@@ -9,6 +9,8 @@ import {
 	ArrowCounterClockwise,
 	DotsThree,
 	FolderOpen,
+	UploadSimple,
+	VideoCamera,
 } from "@/components/ui/icons";
 import { Button } from "@/components/ui/button";
 import { RECORDING_DRAG_TYPE } from "@/types/recordingLibrary";
@@ -121,6 +123,30 @@ export function RecordingLibraryPanel({
 					<X />
 				</Button>
 			</header>
+			<div className="flex gap-2 px-5 pb-3">
+				<Button
+					variant="secondary"
+					size="sm"
+					className="flex-1 gap-1.5"
+					disabled={library.busy || library.importing}
+					title="Record another take and add it after the last clip"
+					onClick={() => void library.recordTake()}
+				>
+					<VideoCamera weight="fill" className="size-4" />
+					Record a take
+				</Button>
+				<Button
+					variant="secondary"
+					size="sm"
+					className="flex-1 gap-1.5"
+					disabled={library.busy || library.importing}
+					title="Add a video file from your computer to the timeline"
+					onClick={() => void library.addFiles()}
+				>
+					<UploadSimple className="size-4" />
+					Add file
+				</Button>
+			</div>
 			<div className="px-5 pb-3">
 				<SearchField aria-label="Search videos" value={query} onChange={setQuery}>
 					<SearchField.Group>

@@ -1,6 +1,11 @@
 import { createSourceListPicker } from "../../sourceListPicker";
 import { writeAppSetting } from "../../appSettingsStore";
 import { getSessionCaptureSource, validateCaptureSource } from "../captureSelection";
+import {
+	clearPendingAppendTake,
+	hasPendingAppendTake,
+	setPendingAppendTake,
+} from "../recording/clipSources";
 import { createRecordingEditorNavigation } from "../../recordingEditorNavigation";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
@@ -648,7 +653,25 @@ body{background:transparent;overflow:hidden;width:100vw;height:100vh}
 		}
 		createSourceSelectorWindow();
 	});
+	const showHudForWindow = (sender: Electron.WebContents) => {
+		setHudRecordingPreparationActive(true);
+		recordingNavigation.setReturnWindow(BrowserWindow.fromWebContents(sender));
+		const hud = getHudOverlayWindow();
+		if (hud && !hud.isDestroyed()) {
+			hud.show();
+			hud.focus();
+		} else {
+			createHudOverlayWindow();
+		}
+	};
+	// Record another take without leaving the project: the finished recording is
+	// appended to this editor's timeline instead of replacing it.
+	ipcMain.handle("show-recording-hud-for-append", (event) => {
+		setPendingAppendTake(BrowserWindow.fromWebContents(event.sender));
+		showHudForWindow(event.sender);
+	});
 	ipcMain.handle("show-recording-hud", (event) => {
+		clearPendingAppendTake();
 		setHudRecordingPreparationActive(true);
 		recordingNavigation.setReturnWindow(BrowserWindow.fromWebContents(event.sender));
 		const hud = getHudOverlayWindow();
@@ -679,7 +702,9 @@ body{background:transparent;overflow:hidden;width:100vw;height:100vh}
 		if (sourceSelectorWin && !sourceSelectorWin.isDestroyed()) {
 			sourceSelectorWin.close();
 		}
-		recordingNavigation.open();
+		// An appended take goes back to its editor as-is; the clip is added once the
+		// recording session is final (see set-current-recording-session).
+		recordingNavigation.open(!hasPendingAppendTake());
 	});
 	return { pickSourceList: () => sourceListPicker.open() };
 }

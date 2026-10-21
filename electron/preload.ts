@@ -520,6 +520,18 @@ contextBridge.exposeInMainWorld("electronAPI", {
 		return () => ipcRenderer.removeListener("recording-permissions-requested", listener);
 	},
 	showRecordingHud: () => ipcRenderer.invoke("show-recording-hud"),
+	showRecordingHudForAppend: () => ipcRenderer.invoke("show-recording-hud-for-append"),
+	pickRecordingFiles: () => ipcRenderer.invoke("pick-recording-files"),
+	onAppendTakeReady: (
+		callback: (session: { videoPath: string; webcamPath?: string | null }) => void,
+	) => {
+		const listener = (
+			_event: Electron.IpcRendererEvent,
+			session: { videoPath: string; webcamPath?: string | null },
+		) => callback(session);
+		ipcRenderer.on("append-take-ready", listener);
+		return () => ipcRenderer.removeListener("append-take-ready", listener);
+	},
 	createProjectFile: (data: unknown, thumbnail?: string | null) =>
 		ipcRenderer.invoke("create-project-file", data, thumbnail),
 	renameLibraryProject: (path: string, name: string) =>
@@ -801,7 +813,7 @@ contextBridge.exposeInMainWorld("electronAPI", {
 			timeOffsetMs?: number;
 			hideOverlayCursorByDefault?: boolean;
 		},
-		options?: { preserveProjectPath?: boolean },
+		options?: { preserveProjectPath?: boolean; final?: boolean },
 	) => {
 		return ipcRenderer.invoke("set-current-recording-session", session, options);
 	},

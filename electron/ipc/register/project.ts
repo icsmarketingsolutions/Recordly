@@ -5,6 +5,7 @@ import { trashLibraryProjects } from "../project/trashProjects";
 import { getRecordingThumbnail } from "../recording/thumbnail";
 import { listRecordings, setRecordingsRemoved } from "../recording/library";
 import { importRecording, discardRecordingImport } from "../recording/importRecording";
+import { approveExternalImport, resolvePendingAppendTake } from "../recording/clipSources";
 import { randomUUID } from "node:crypto";
 import { constants as fsConstants } from "node:fs";
 import fs from "node:fs/promises";
@@ -868,7 +869,7 @@ export function registerProjectHandlers() {
 				timeOffsetMs?: number;
 				hideOverlayCursorByDefault?: boolean;
 			},
-			options?: { preserveProjectPath?: boolean },
+			options?: { preserveProjectPath?: boolean; final?: boolean },
 		) => {
 			const normalizedVideoPath =
 				normalizeVideoSourcePath(session.videoPath) ?? session.videoPath;
@@ -892,10 +893,34 @@ export function registerProjectHandlers() {
 					window.webContents.send("recording-session-changed", nextSession);
 				}
 			}
+			if (options?.final) resolvePendingAppendTake(nextSession);
 
 			return { success: true };
 		},
 	);
+
+	// Lets the Clips panel append any video file, not only library recordings. The
+	// chosen files are read in place and never modified.
+	ipcMain.handle("pick-recording-files", async (event) => {
+		const owner = BrowserWindow.fromWebContents(event.sender);
+		const options: Electron.OpenDialogOptions = {
+			title: "Add video files",
+			properties: ["openFile", "multiSelections"],
+			filters: [
+				{ name: "Video Files", extensions: ["mp4", "mov", "webm", "mkv", "m4v"] },
+				{ name: "All Files", extensions: ["*"] },
+			],
+		};
+		const result = owner
+			? await dialog.showOpenDialog(owner, options)
+			: await dialog.showOpenDialog(options);
+		if (result.canceled || !result.filePaths.length) return { success: true, paths: [] };
+		for (const filePath of result.filePaths) {
+			approveExternalImport(filePath);
+			await rememberApprovedLocalReadPath(filePath);
+		}
+		return { success: true, paths: result.filePaths };
+	});
 
 	ipcMain.handle("get-current-recording-session", (event) => {
 		const { recordingSession } = getEditorContext(event.sender);

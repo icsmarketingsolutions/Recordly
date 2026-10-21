@@ -20,6 +20,13 @@ nuestros cambios encima. `rapid-captions` y `camera-fx` son las ramas histórica
   1×/1.5×/2× (botones −/+); se recuerda por máquina en `localStorage`.
 - Exportación: WebGPU por defecto en Windows/macOS (82 vs 47 fps medidos) y aviso cuando
   la GPU quedó en modo software (`gpuHealth.ts`): en ese caso reiniciar Recordly.
+- **Multi-clip**: el panel *Clips* (que el upstream trae para anexar grabaciones de la
+  biblioteca) gana dos botones: **Record a take** (graba otra toma desde el editor y la
+  anexa al final cuando la grabación termina, sin reemplazar el proyecto;
+  `clipSources.ts` + evento `append-take-ready`) y **Add file** (cualquier mp4/mov/webm/
+  mkv del disco, aprobado por diálogo). El anexado reusa el importador del upstream:
+  reencoda y concatena en `.recordly-media/<uuid>.mp4` (un solo archivo fuente, clips
+  con `sourceMinMs/sourceMaxMs`); subtítulos del clip nuevo hay que regenerarlos.
 - **Sin cuenta obligatoria**: grabar y guardar nunca piden iniciar sesión; el onboarding
   del upstream solo se abre a pedido y siempre se puede cerrar.
 
@@ -69,7 +76,7 @@ Variables útiles: `_WEBCAM_INPUT`, `_BACKEND` (`auto|breeze|webcodecs`),
 
 Lanzar el paquete con `--remote-debugging-port=9333 --user-data-dir=<carpeta aparte>` y
 manejar la HUD por el protocolo de DevTools (la API del preload queda en `window.electronAPI`).
-Los guiones en `scripts/e2e/` (`e2e-retake.mjs`, `e2e-multiwindow.mjs`, `cdp.mjs`) seleccionan
+Los guiones en `scripts/e2e/` (`e2e-retake.mjs`, `e2e-multiwindow.mjs`, `e2e-append-take.mjs`, `cdp.mjs`) seleccionan
 la pantalla, graban, rehacen/cancelan y comprueban los archivos y las ventanas. Para
 probar siempre hay que cerrar solo los procesos cuyo `CommandLine` contenga esa carpeta
 de datos, nunca la Recordly del usuario.

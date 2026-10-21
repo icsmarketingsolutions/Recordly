@@ -241,6 +241,33 @@ export function useRecordingLibrary(
 			setCancelling(false);
 		}
 	};
+	// Record another take from this editor: the HUD opens, and when the new
+	// recording is final it is appended after the last clip.
+	const recordTake = useCallback(async () => {
+		if (lock.current) return;
+		setOpen(false);
+		await window.electronAPI.showRecordingHudForAppend();
+	}, []);
+
+	// Append any video file from disk (not only library recordings).
+	const addFiles = async () => {
+		if (lock.current) return;
+		const result = await window.electronAPI.pickRecordingFiles();
+		if (!result.success || !result.paths.length) return;
+		await addToTimeline(result.paths);
+	};
+
+	const appendRef = useRef(addToTimeline);
+	appendRef.current = addToTimeline;
+	useEffect(
+		() =>
+			window.electronAPI.onAppendTakeReady?.((session) => {
+				void refresh();
+				void appendRef.current([session.videoPath]);
+			}),
+		[refresh],
+	);
+
 	return {
 		open,
 		setOpen,
@@ -258,5 +285,7 @@ export function useRecordingLibrary(
 		cancelling,
 		cancelImport,
 		addToTimeline,
+		recordTake,
+		addFiles,
 	};
 }

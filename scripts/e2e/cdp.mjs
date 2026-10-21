@@ -6,7 +6,7 @@ const targets = (await (await fetch("http://127.0.0.1:9333/json")).json()).filte
 );
 if (!targets.length) throw new Error("no page matches " + filter);
 const ws = new WebSocket(targets[0].webSocketDebuggerUrl);
-await new Promise((r) => (ws.onopen = r));
+await new Promise((r) => ws.addEventListener("open", r));
 let id = 0;
 const pending = new Map();
 ws.onmessage = (e) => {

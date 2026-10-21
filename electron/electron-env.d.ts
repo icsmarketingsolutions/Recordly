@@ -764,7 +764,7 @@ interface Window {
 				timeOffsetMs?: number;
 				hideOverlayCursorByDefault?: boolean;
 			},
-			options?: { preserveProjectPath?: boolean },
+			options?: { preserveProjectPath?: boolean; final?: boolean },
 		) => Promise<{ success: boolean }>;
 		getCurrentRecordingSession: () => Promise<{
 			success: boolean;
@@ -866,6 +866,11 @@ interface Window {
 		showRecordingPermissions: () => Promise<void>;
 		onRecordingPermissionsRequested: (callback: () => void) => () => void;
 		showRecordingHud: () => Promise<void>;
+		showRecordingHudForAppend: () => Promise<void>;
+		pickRecordingFiles: () => Promise<{ success: boolean; paths: string[] }>;
+		onAppendTakeReady: (
+			callback: (session: { videoPath: string; webcamPath?: string | null }) => void,
+		) => () => void;
 		createProjectFile: (
 			data: unknown,
 			thumbnail?: string | null,

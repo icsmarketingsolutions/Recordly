@@ -19,7 +19,9 @@ for (let i = 0; i < 30 && targets.length === 0; i++) {
 		targets = (await (await fetch(`http://127.0.0.1:${PORT}/json`)).json()).filter(
 			(t) => t.type === "page" && !/windowType=editor/.test(t.url),
 		);
-	} catch {}
+	} catch {
+		// The app is still starting; try again.
+	}
 	if (targets.length === 0) await sleep(1000);
 }
 if (targets.length === 0) throw new Error("HUD page not found");
@@ -27,7 +29,7 @@ const hud = targets.find((t) => /windowType=(launch|hud)/.test(t.url)) ?? target
 console.log("page:", hud.url.slice(0, 80));
 
 const ws = new WebSocket(hud.webSocketDebuggerUrl);
-await new Promise((r) => (ws.onopen = r));
+await new Promise((r) => ws.addEventListener("open", r));
 let id = 0;
 const pending = new Map();
 ws.onmessage = (e) => {

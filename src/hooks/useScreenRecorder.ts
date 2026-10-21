@@ -1401,12 +1401,16 @@ export function useScreenRecorder(): UseScreenRecorderReturn {
 
 						// Update the session state to notify the editor that all background assets (webcam, mic, etc.) are now ready.
 						// This broadcasts a 'recording-session-changed' event that the open editor listens to for re-scanning assets.
-						await window.electronAPI.setCurrentRecordingSession({
-							videoPath: finalPath,
-							webcamPath,
-							timeOffsetMs: webcamTimeOffsetMs.current,
-							hideOverlayCursorByDefault: hideEditorOverlayCursorByDefault.current,
-						});
+						await window.electronAPI.setCurrentRecordingSession(
+							{
+								videoPath: finalPath,
+								webcamPath,
+								timeOffsetMs: webcamTimeOffsetMs.current,
+								hideOverlayCursorByDefault:
+									hideEditorOverlayCursorByDefault.current,
+							},
+							{ final: true },
+						);
 
 						console.log(
 							`[PERF:RENDERER] Background Stop Sequence: COMPLETED in ${(performance.now() - stopStart).toFixed(2)}ms`,
@@ -2185,15 +2189,17 @@ export function useScreenRecorder(): UseScreenRecorderReturn {
 								: resolvedWebcamPath.current;
 
 							try {
-								if (webcamPath) {
-									await window.electronAPI.setCurrentRecordingSession({
+								// Always publish the final session so an appended take can be picked up.
+								await window.electronAPI.setCurrentRecordingSession(
+									{
 										videoPath: finalVideoPath,
-										webcamPath,
+										webcamPath: webcamPath ?? null,
 										timeOffsetMs: webcamTimeOffsetMs.current,
 										hideOverlayCursorByDefault:
 											hideEditorOverlayCursorByDefault.current,
-									});
-								}
+									},
+									{ final: true },
+								);
 							} finally {
 								// After all background tasks are done (webcam),
 								// we can safely close the HUD window to release hardware and resources.
