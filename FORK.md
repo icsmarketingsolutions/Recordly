@@ -9,6 +9,19 @@ nuestros cambios encima. `rapid-captions` y `camera-fx` son las ramas histórica
 
 - Subtítulos rápidos con tiempos por palabra (`RAPID-CAPTIONS.md`).
 - Efectos de cámara con IA para la capa de webcam (`CAMERA-FX.md`).
+- HUD: botón **Volver a grabar** (↺) junto a Cancelar (✕); los dos piden un segundo
+  toque. Cancelar borra también los `.wav`, sus `.json` y los diagnósticos.
+- **Varios editores a la vez**: relanzar Recordly (o clic en la bandeja) con un editor
+  abierto muestra la HUD; cada grabación terminada abre su propio editor y los demás
+  siguen abiertos. El estado por ventana vive en `EditorContext` (`electron/ipc/state.ts`).
+- La barra de la HUD se puede arrastrar a **cualquier monitor** (la ventana transparente
+  cubre la unión de todas las pantallas).
+- Timeline con **alto ajustable** (barra de arrastre, doble clic restablece) y pistas a
+  1×/1.5×/2× (botones −/+); se recuerda por máquina en `localStorage`.
+- Exportación: WebGPU por defecto en Windows/macOS (82 vs 47 fps medidos) y aviso cuando
+  la GPU quedó en modo software (`gpuHealth.ts`): en ese caso reiniciar Recordly.
+- **Sin cuenta obligatoria**: grabar y guardar nunca piden iniciar sesión; el onboarding
+  del upstream solo se abre a pedido y siempre se puede cerrar.
 
 ## Cómo se construye (Windows)
 
@@ -51,6 +64,15 @@ instalada, así se puede probar mientras otra Recordly está exportando.
 
 Variables útiles: `_WEBCAM_INPUT`, `_BACKEND` (`auto|breeze|webcodecs`),
 `_ENCODING_MODE` (`fast|balanced|quality`), `_PIPELINE`, `_RENDER_BACKEND`.
+
+## Pruebas de extremo a extremo (CDP)
+
+Lanzar el paquete con `--remote-debugging-port=9333 --user-data-dir=<carpeta aparte>` y
+manejar la HUD por el protocolo de DevTools (la API del preload queda en `window.electronAPI`).
+Los guiones usados el 21-oct-2026 (`e2e-retake.mjs`, `e2e-multiwindow.mjs`) seleccionan
+la pantalla, graban, rehacen/cancelan y comprueban los archivos y las ventanas. Para
+probar siempre hay que cerrar solo los procesos cuyo `CommandLine` contenga esa carpeta
+de datos, nunca la Recordly del usuario.
 
 ## Sincronizar con el upstream
 
