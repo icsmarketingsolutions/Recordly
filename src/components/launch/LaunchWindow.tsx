@@ -63,6 +63,7 @@ function LaunchWindowContent() {
 		pauseRecording,
 		resumeRecording,
 		cancelRecording,
+		retakeRecording,
 		cancelRecordingStart,
 		microphoneEnabled,
 		setMicrophoneEnabled,
@@ -264,6 +265,7 @@ function LaunchWindowContent() {
 			onStopRecording={toggleRecording}
 			onHideHud={() => window.electronAPI?.hudOverlayHide?.()}
 			onCancelRecording={cancelRecording}
+			onRetakeRecording={() => void retakeRecording()}
 			formatTime={formatTime}
 		/>
 	);

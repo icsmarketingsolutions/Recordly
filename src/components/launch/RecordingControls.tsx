@@ -1,4 +1,5 @@
 import {
+	ArrowCounterClockwise,
 	House,
 	MicrophoneIcon,
 	MicrophoneSlashIcon,
@@ -9,6 +10,7 @@ import {
 } from "@/components/ui/icons";
 import { useScopedT } from "@/contexts/I18nContext";
 import { Button, Separator, Tooltip } from "@heroui/react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import styles from "./LaunchWindow.module.css";
 
 interface RecordingControlsProps {
@@ -20,8 +22,40 @@ interface RecordingControlsProps {
 	onStopRecording: () => void;
 	onHideHud: () => void;
 	onCancelRecording: () => void;
+	onRetakeRecording: () => void;
 	formatTime: (seconds: number) => string;
 }
+
+type DestructiveAction = "retake" | "cancel";
+const ARMED_ACTION_TIMEOUT_MS = 4000;
+
+// Both actions throw the take away, so they need a second tap to confirm. The HUD has
+// no room for a dialog: the button itself turns into the confirmation for a few seconds.
+function useArmedAction() {
+	const [armed, setArmed] = useState<DestructiveAction | null>(null);
+	const timer = useRef<number | null>(null);
+	const clear = useCallback(() => {
+		if (timer.current !== null) window.clearTimeout(timer.current);
+		timer.current = null;
+		setArmed(null);
+	}, []);
+	useEffect(() => clear, [clear]);
+	const press = useCallback(
+		(action: DestructiveAction, run: () => void) => {
+			if (armed === action) {
+				clear();
+				run();
+				return;
+			}
+			if (timer.current !== null) window.clearTimeout(timer.current);
+			setArmed(action);
+			timer.current = window.setTimeout(clear, ARMED_ACTION_TIMEOUT_MS);
+		},
+		[armed, clear],
+	);
+	return { armed, press };
+}
+
 export function RecordingControls({
 	onHome,
 	paused,
@@ -31,10 +65,13 @@ export function RecordingControls({
 	onStopRecording,
 	onHideHud,
 	onCancelRecording,
+	onRetakeRecording,
 	formatTime,
 }: RecordingControlsProps) {
 	const t = useScopedT("launch");
 	const actionClass = `size-9 min-w-9 rounded-full ${styles.electronNoDrag}`;
+	const { armed, press } = useArmedAction();
+	const armedClass = `h-9 min-w-9 rounded-full px-3 text-xs font-medium ${styles.electronNoDrag}`;
 	return (
 		<div role="group" aria-label="Recording controls" className="flex items-center gap-2">
 			<Button
@@ -122,13 +159,31 @@ export function RecordingControls({
 			</Tooltip>
 			<Tooltip>
 				<Button
-					isIconOnly
-					variant="ghost"
-					className={actionClass}
-					onPress={onCancelRecording}
-					aria-label={t("recording.cancel")}
+					isIconOnly={armed !== "retake"}
+					variant={armed === "retake" ? "primary" : "ghost"}
+					className={armed === "retake" ? armedClass : actionClass}
+					onPress={() => press("retake", onRetakeRecording)}
+					aria-label={
+						armed === "retake" ? t("recording.retakeConfirm") : t("recording.retake")
+					}
+				>
+					<ArrowCounterClockwise className="size-4" />
+					{armed === "retake" && <span>{t("recording.retakeConfirm")}</span>}
+				</Button>
+				<Tooltip.Content>{t("recording.retake")}</Tooltip.Content>
+			</Tooltip>
+			<Tooltip>
+				<Button
+					isIconOnly={armed !== "cancel"}
+					variant={armed === "cancel" ? "danger" : "ghost"}
+					className={armed === "cancel" ? armedClass : actionClass}
+					onPress={() => press("cancel", onCancelRecording)}
+					aria-label={
+						armed === "cancel" ? t("recording.cancelConfirm") : t("recording.cancel")
+					}
 				>
 					<XIcon className="size-4" />
+					{armed === "cancel" && <span>{t("recording.cancelConfirm")}</span>}
 				</Button>
 				<Tooltip.Content>{t("recording.cancel")}</Tooltip.Content>
 			</Tooltip>

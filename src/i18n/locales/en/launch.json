@@ -43,6 +43,9 @@
 		"pause": "Pause",
 		"stop": "Stop",
 		"cancel": "Cancel",
+		"retake": "Retake",
+		"retakeConfirm": "Tap again to retake",
+		"cancelConfirm": "Tap again to discard",
 		"more": "More",
 		"update": {
 			"update": "Update",

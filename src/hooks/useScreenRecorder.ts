@@ -129,6 +129,7 @@ type UseScreenRecorderReturn = {
 	pauseRecording: () => void;
 	resumeRecording: () => void;
 	cancelRecording: () => void;
+	retakeRecording: () => Promise<void>;
 	cancelRecordingStart: () => Promise<boolean>;
 	preparePermissions: () => Promise<boolean>;
 	isMacOS: boolean;
@@ -2393,7 +2394,9 @@ export function useScreenRecorder(): UseScreenRecorderReturn {
 		}
 	}, [markRecordingResumed, paused, recording, resumeMicFallbackRecorder]);
 
-	const cancelRecording = useCallback(() => {
+	// Discards the active recording and resolves once the captured files are gone, so a
+	// retake can start a fresh capture right away.
+	const discardRecording = useCallback(async () => {
 		recordingStartGeneration.current += 1;
 		if (!recording) return;
 		setPaused(false);
@@ -2415,9 +2418,8 @@ export function useScreenRecorder(): UseScreenRecorderReturn {
 		if (nativeScreenRecording.current) {
 			setRecording(false);
 			window.electronAPI?.setRecordingState(false);
-			void (async () => {
-				await Promise.allSettled([discardActiveNativeCapture(), stopMicFallbackRecorder()]);
-			})();
+			await Promise.allSettled([discardActiveNativeCapture(), stopMicFallbackRecorder()]);
+			cleanupCapturedMedia();
 			return;
 		}
 
@@ -2438,6 +2440,20 @@ export function useScreenRecorder(): UseScreenRecorderReturn {
 		recording,
 		stopMicFallbackRecorder,
 	]);
+
+	const cancelRecording = useCallback(() => {
+		void discardRecording();
+	}, [discardRecording]);
+
+	// Throw the current take away and immediately start a new one with the same source
+	// and settings, without going through the editor.
+	const retakeRecording = async () => {
+		if (!recording || finalizing || starting || countdownActive) {
+			return;
+		}
+		await discardRecording();
+		await startRecording();
+	};
 
 	const toggleRecording = async () => {
 		if (starting || countdownActive || finalizing) {
@@ -2461,6 +2477,7 @@ export function useScreenRecorder(): UseScreenRecorderReturn {
 		pauseRecording,
 		resumeRecording,
 		cancelRecording,
+		retakeRecording,
 		cancelRecordingStart,
 		preparePermissions,
 		isMacOS,

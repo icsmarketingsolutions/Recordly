@@ -43,6 +43,9 @@
 		"pause": "Pause",
 		"stop": "Arrêter",
 		"cancel": "Annuler",
+		"retake": "Refaire la prise",
+		"retakeConfirm": "Appuyez à nouveau pour refaire",
+		"cancelConfirm": "Appuyez à nouveau pour abandonner",
 		"more": "Plus",
 		"update": {
 			"update": "Mettre à jour",

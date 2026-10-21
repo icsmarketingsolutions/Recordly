@@ -43,6 +43,9 @@
 		"pause": "일시 정지",
 		"stop": "중지",
 		"cancel": "취소",
+		"retake": "다시 녹화",
+		"retakeConfirm": "다시 누르면 재녹화",
+		"cancelConfirm": "다시 누르면 삭제",
 		"more": "더 보기",
 		"update": {
 			"update": "업데이트",

@@ -43,6 +43,9 @@
 		"pause": "Pausa",
 		"stop": "Detener",
 		"cancel": "Cancelar",
+		"retake": "Volver a grabar",
+		"retakeConfirm": "Tocá de nuevo para regrabar",
+		"cancelConfirm": "Tocá de nuevo para descartar",
 		"more": "Más",
 		"update": {
 			"update": "Actualizar",

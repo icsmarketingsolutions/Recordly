@@ -43,6 +43,9 @@
 		"pause": "Pauzeren",
 		"stop": "Stoppen",
 		"cancel": "Annuleren",
+		"retake": "Opnieuw opnemen",
+		"retakeConfirm": "Tik nogmaals om opnieuw op te nemen",
+		"cancelConfirm": "Tik nogmaals om te verwijderen",
 		"more": "Meer",
 		"update": {
 			"update": "Bijwerken",

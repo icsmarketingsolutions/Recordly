@@ -43,6 +43,9 @@
 		"pause": "暂停",
 		"stop": "停止",
 		"cancel": "取消",
+		"retake": "重新录制",
+		"retakeConfirm": "再按一次重新录制",
+		"cancelConfirm": "再按一次放弃",
 		"more": "更多",
 		"update": {
 			"update": "更新",

@@ -39,6 +39,8 @@ import {
 	setCurrentProjectPath,
 	setCurrentRecordingSession,
 	setCurrentVideoPath,
+	setWindowsPendingVideoPath,
+	windowsPendingVideoPath,
 } from "../state";
 import {
 	approveUserPath,
@@ -929,6 +931,26 @@ export function registerProjectHandlers() {
 			// Also delete the cursor telemetry sidecar if it exists
 			const telemetryPath = getTelemetryPathForVideo(resolvedPath);
 			await fs.unlink(telemetryPath).catch(() => undefined);
+			// A discarded native capture leaves audio sidecars and diagnostics next to the
+			// video; remove them too so a retake does not pile up orphans.
+			const sidecarBase = resolvedPath.replace(/\.mp4$/i, "");
+			await Promise.all(
+				[
+					".system.wav",
+					".system.wav.json",
+					".mic.wav",
+					".mic.wav.json",
+					".recording-diagnostics.json",
+				].map((suffix) => fs.unlink(`${sidecarBase}${suffix}`).catch(() => undefined)),
+			);
+			if (
+				windowsPendingVideoPath &&
+				(await fs
+					.realpath(windowsPendingVideoPath)
+					.catch(() => windowsPendingVideoPath)) === resolvedPath
+			) {
+				setWindowsPendingVideoPath(null);
+			}
 			const currentResolved = currentVideoPath
 				? await fs.realpath(currentVideoPath).catch(() => currentVideoPath)
 				: null;
