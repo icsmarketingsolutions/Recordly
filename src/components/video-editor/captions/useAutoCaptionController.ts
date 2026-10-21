@@ -5,6 +5,7 @@ import { type CaptionEditTarget, updateCaptionCuesForEditedTarget } from "../cap
 import { resolveVideoUrl } from "../projectPersistence";
 import type { AutoCaptionSettings, CaptionCue } from "../types";
 import { getErrorMessage } from "../videoEditorUtils";
+import { RAPID_CAPTION_STYLE, splitRapidCaptions } from "../rapidCaptions";
 
 type DownloadStatus = "idle" | "downloading" | "downloaded" | "error";
 type Translator = (
@@ -32,6 +33,7 @@ interface UseAutoCaptionControllerParams {
 	isGeneratingCaptions: boolean;
 	setIsGeneratingCaptions: Dispatch<SetStateAction<boolean>>;
 	autoCaptionSettings: AutoCaptionSettings;
+	autoCaptions: CaptionCue[];
 	setAutoCaptionSettings: Dispatch<SetStateAction<AutoCaptionSettings>>;
 	setAutoCaptions: Dispatch<SetStateAction<CaptionCue[]>>;
 	syncActiveVideoSource: (sourcePath: string, webcamPath?: string | null) => Promise<void>;
@@ -56,6 +58,7 @@ export function useAutoCaptionController({
 	isGeneratingCaptions,
 	setIsGeneratingCaptions,
 	autoCaptionSettings,
+	autoCaptions,
 	setAutoCaptionSettings,
 	setAutoCaptions,
 	syncActiveVideoSource,
@@ -203,11 +206,23 @@ export function useAutoCaptionController({
 				toast.error(errorMessage || "Failed to generate captions");
 				return;
 			}
-			setAutoCaptions(result.cues);
-			if (result.cues.length > 0) {
-				setAutoCaptionSettings((current) => ({ ...current, enabled: true }));
+			const rapid = autoCaptionSettings.segmentationMode === "rapid";
+			const cues = rapid
+				? splitRapidCaptions(result.cues, autoCaptionSettings.wordsPerCaption, true)
+				: result.cues;
+			setAutoCaptions(cues);
+			if (cues.length > 0) {
+				setAutoCaptionSettings((current) => ({
+					...current,
+					...(rapid ? RAPID_CAPTION_STYLE : {}),
+					enabled: true,
+				}));
 			}
-			toast.success(result.message || `Generated ${result.cues.length} captions`);
+			toast.success(
+				rapid
+					? `${cues.length} subtítulos rápidos listos`
+					: result.message || `Generated ${cues.length} captions`,
+			);
 		} catch (error) {
 			toast.error(getErrorMessage(error));
 		} finally {
@@ -216,6 +231,8 @@ export function useAutoCaptionController({
 		}
 	}, [
 		autoCaptionSettings.language,
+		autoCaptionSettings.segmentationMode,
+		autoCaptionSettings.wordsPerCaption,
 		isGeneratingCaptions,
 		setAutoCaptionSettings,
 		setAutoCaptions,
@@ -228,6 +245,30 @@ export function useAutoCaptionController({
 		webcamSourcePath,
 		whisperExecutablePath,
 		whisperModelPath,
+	]);
+
+	const handleSplitRapidCaptions = useCallback(() => {
+		try {
+			splitRapidCaptions(autoCaptions, autoCaptionSettings.wordsPerCaption, true);
+		} catch (error) {
+			toast.error(getErrorMessage(error));
+			return;
+		}
+		setAutoCaptions((current) =>
+			splitRapidCaptions(current, autoCaptionSettings.wordsPerCaption, true),
+		);
+		setAutoCaptionSettings((current) => ({
+			...current,
+			...RAPID_CAPTION_STYLE,
+			segmentationMode: "rapid",
+			enabled: true,
+		}));
+		toast.success("Subtítulos divididos automáticamente");
+	}, [
+		autoCaptions,
+		autoCaptionSettings.wordsPerCaption,
+		setAutoCaptions,
+		setAutoCaptionSettings,
 	]);
 
 	const handleSaveAutoCaptionEdit = useCallback(
@@ -244,6 +285,7 @@ export function useAutoCaptionController({
 		handlePickWhisperModel,
 		handleDeleteWhisperSmallModel,
 		handleGenerateAutoCaptions,
+		handleSplitRapidCaptions,
 		handleSaveAutoCaptionEdit,
 	};
 }

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
 	convertLegacyWebcamRadiusToRoundness,
+	getActiveWebcamEffectsBake,
 	getCropMatchedWebcamHeightPercent,
 	getWebcamCornerRadiusPx,
 	getWebcamCropSourceRect,
@@ -8,6 +9,7 @@ import {
 	getWebcamOverlayPosition,
 	isWebcamCropRegionDefault,
 	normalizeWebcamCropRegion,
+	normalizeWebcamEffectsBake,
 	scaleWebcamOverlayPixels,
 } from "./webcamOverlay";
 
@@ -122,5 +124,32 @@ describe("getWebcamCropSourceRect", () => {
 			sw: 960,
 			sh: 810,
 		});
+	});
+});
+
+describe("webcam effects bake", () => {
+	const bake = {
+		originalPath: "C:/rec/recording-1-webcam.webm",
+		outputPath: "C:/rec/recording-2-webcam-fx.mp4",
+		effects: { gazeCorrection: 0.6 },
+	};
+
+	it("only counts while the processed copy is the current footage", () => {
+		const normalized = normalizeWebcamEffectsBake(bake, bake.outputPath);
+		expect(normalized?.originalPath).toBe(bake.originalPath);
+		expect(normalized?.effects.gazeCorrection).toBe(0.6);
+		expect(normalizeWebcamEffectsBake(bake, bake.originalPath)).toBeNull();
+		expect(normalizeWebcamEffectsBake(bake, null)).toBeNull();
+		expect(
+			normalizeWebcamEffectsBake({ outputPath: bake.outputPath }, bake.outputPath),
+		).toBeNull();
+	});
+
+	it("is ignored once other code swaps the webcam source", () => {
+		const effectsBake = normalizeWebcamEffectsBake(bake, bake.outputPath);
+		expect(getActiveWebcamEffectsBake({ sourcePath: bake.outputPath, effectsBake })).toBe(
+			effectsBake,
+		);
+		expect(getActiveWebcamEffectsBake({ sourcePath: "C:/other.webm", effectsBake })).toBeNull();
 	});
 });

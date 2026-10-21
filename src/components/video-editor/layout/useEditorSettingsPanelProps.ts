@@ -10,7 +10,7 @@ import type { useZoomRegionCommands } from "../hooks/useZoomRegionCommands";
 import { SettingsPanel } from "../SettingsPanel";
 import type { useAppearanceState } from "../state/useAppearanceState";
 import type { useTimelineState } from "../state/useTimelineState";
-import { type EditorEffectSection, mapTimelineTimeToSourceTime } from "../types";
+import { type EditorEffectSection, mapTimelineTimeToSourceTime, type WebcamEffectsBake } from "../types";
 
 type Input = {
 	activeEffectSection: EditorEffectSection;
@@ -37,6 +37,8 @@ type Input = {
 	setNativeCaptureUnavailableModalOpen: Dispatch<SetStateAction<boolean>>;
 	handleUploadWebcam: () => void;
 	handleClearWebcam: () => void;
+	handleWebcamEffectsBaked: (bake: WebcamEffectsBake) => Promise<void>;
+	handleRestoreWebcamOriginal: () => Promise<void>;
 };
 
 export function useEditorSettingsPanelProps(input: Input): ComponentProps<typeof SettingsPanel> {
@@ -65,6 +67,8 @@ export function useEditorSettingsPanelProps(input: Input): ComponentProps<typeof
 		setNativeCaptureUnavailableModalOpen,
 		handleUploadWebcam,
 		handleClearWebcam,
+		handleWebcamEffectsBaked,
+		handleRestoreWebcamOriginal,
 	} = input;
 	const selectedZoom = timeline.zoomRegions.find(
 		(region) => region.id === timeline.selectedZoomId,
@@ -179,6 +183,8 @@ export function useEditorSettingsPanelProps(input: Input): ComponentProps<typeof
 		onWebcamChange: appearance.setWebcam,
 		onUploadWebcam: handleUploadWebcam,
 		onClearWebcam: handleClearWebcam,
+		onWebcamEffectsBaked: handleWebcamEffectsBaked,
+		onRestoreWebcamOriginal: handleRestoreWebcamOriginal,
 		padding: appearance.padding,
 		onPaddingChange: appearance.setPadding,
 		cropRegion: appearance.cropRegion,
@@ -198,6 +204,7 @@ export function useEditorSettingsPanelProps(input: Input): ComponentProps<typeof
 		onPickWhisperExecutable: autoCaptionController.handlePickWhisperExecutable,
 		onPickWhisperModel: autoCaptionController.handlePickWhisperModel,
 		onGenerateAutoCaptions: autoCaptionController.handleGenerateAutoCaptions,
+		onSplitRapidCaptions: autoCaptionController.handleSplitRapidCaptions,
 		onClearAutoCaptions: captionCommands.handleClearAutoCaptions,
 		captionCurrentTimeMs: mapTimelineTimeToSourceTime(currentTime * 1000, timeline.clipRegions),
 		selectedCaptionId: timeline.selectedCaptionId,

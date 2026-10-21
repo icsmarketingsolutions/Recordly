@@ -23,6 +23,7 @@ export function ProjectThumbnail({
 	const [preview, setPreview] = useState<ProjectPreviewData | null>(null);
 	const host = useRef<HTMLDivElement>(null);
 	const finish = useCallback(() => setPreview(null), []);
+	// biome-ignore lint/correctness/useExhaustiveDependencies: revision refetches the preview after each save
 	useEffect(() => {
 		if (
 			!previewActive ||

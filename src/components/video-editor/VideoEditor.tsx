@@ -264,7 +264,12 @@ export default function VideoEditor() {
 	const {
 		snapshot: { currentSourcePath },
 		history: { handleUndo, handleRedo },
-		lifecycle: { handleUploadWebcam, handleClearWebcam },
+		lifecycle: {
+			handleUploadWebcam,
+			handleClearWebcam,
+			handleWebcamEffectsBaked,
+			handleRestoreWebcamOriginal,
+		},
 		autoCaption: autoCaptionController,
 	} = projectController;
 
@@ -378,6 +383,8 @@ export default function VideoEditor() {
 		setNativeCaptureUnavailableModalOpen,
 		handleUploadWebcam,
 		handleClearWebcam,
+		handleWebcamEffectsBaked,
+		handleRestoreWebcamOriginal,
 	});
 	return (
 		<EditorShell

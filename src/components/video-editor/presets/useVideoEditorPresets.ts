@@ -116,6 +116,7 @@ export function useVideoEditorPresets({
 				...snapshot.webcam,
 				sourcePath: current.sourcePath,
 				visibleRanges: current.visibleRanges,
+				effectsBake: current.effectsBake ?? null,
 			}));
 			setAspectRatio(snapshot.aspectRatio);
 			timeline.setAutoCaptionSettings({ ...snapshot.autoCaptionSettings });

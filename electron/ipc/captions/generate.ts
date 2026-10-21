@@ -280,6 +280,10 @@ async function generateCaptionsForSource(options: {
 			// Do not carry a hallucinated phrase through later decoding windows.
 			"-mc",
 			"0",
+			// Also give the SRT fallback real word boundaries.
+			"-ml",
+			"1",
+			"-sow",
 		];
 
 		let jsonEnabled = true;
@@ -298,7 +302,18 @@ async function generateCaptionsForSource(options: {
 			await executeWhisper(whisperExecutablePath, whisperBaseArgs);
 		}
 
-		const cues = await readWhisperCaptionOutput(outputBase, jsonEnabled);
+		const parsedCues = await readWhisperCaptionOutput(outputBase, jsonEnabled);
+		const cues = parsedCues.map((cue) =>
+			!cue.words?.length && cue.text.trim().split(/\s+/).length === 1
+				? {
+						...cue,
+						words: [{ text: cue.text.trim(), startMs: cue.startMs, endMs: cue.endMs }],
+					}
+				: cue,
+		);
+		if (cues.length === 0) {
+			throw new Error("Whisper completed, but no caption cues were produced.");
+		}
 
 		// Whisper cues run sentences together and don't break on pauses. Re-segment them
 		// into one caption per sentence/phrase using Whisper's own word stream (punctuation

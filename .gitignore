@@ -49,3 +49,6 @@ gpu-export-probe.mp4
 # Browser test output
 test-results/
 playwright-report/
+
+# Camera effects runtime + models (scripts/prepare-camera-fx-assets.mjs)
+public/camera-fx/

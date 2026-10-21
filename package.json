@@ -15,9 +15,9 @@
 	"version": "1.4.0",
 	"type": "module",
 	"scripts": {
-		"dev": "vite --config vite.config.ts",
+		"dev": "npm run prepare:camera-fx && vite --config vite.config.ts",
 		"postinstall": "node scripts/postinstall.mjs",
-		"build": "npm run build:platform-native-helpers && tsc && vite build --config vite.config.ts && npm run normalize:electron-main-cjs && npm run smoke:electron-main-cjs && electron-builder",
+		"build": "npm run build:platform-native-helpers && tsc && npm run prepare:camera-fx && vite build --config vite.config.ts && npm run normalize:electron-main-cjs && npm run smoke:electron-main-cjs && electron-builder",
 		"lint": "biome lint .",
 		"lint:fix": "biome lint --write .",
 		"format": "biome format --write .",
@@ -31,9 +31,9 @@
 		"build:nvidia-cuda-compositor": "node scripts/build-nvidia-cuda-compositor.mjs",
 		"build:windows-capture": "node scripts/build-windows-capture.mjs",
 		"build:cursor-monitor": "node scripts/build-cursor-monitor.mjs",
-		"build:mac": "npm run build:platform-native-helpers && tsc && vite build --config vite.config.ts && npm run normalize:electron-main-cjs && npm run smoke:electron-main-cjs && electron-builder --mac",
-		"build:win": "npm run build:platform-native-helpers && tsc && vite build --config vite.config.ts && npm run normalize:electron-main-cjs && npm run smoke:electron-main-cjs && electron-builder --win",
-		"build:linux": "npm run build:platform-native-helpers && tsc && vite build --config vite.config.ts && npm run normalize:electron-main-cjs && npm run smoke:electron-main-cjs && electron-builder --linux",
+		"build:mac": "npm run build:platform-native-helpers && tsc && npm run prepare:camera-fx && vite build --config vite.config.ts && npm run normalize:electron-main-cjs && npm run smoke:electron-main-cjs && electron-builder --mac",
+		"build:win": "npm run build:platform-native-helpers && tsc && npm run prepare:camera-fx && vite build --config vite.config.ts && npm run normalize:electron-main-cjs && npm run smoke:electron-main-cjs && electron-builder --win",
+		"build:linux": "npm run build:platform-native-helpers && tsc && npm run prepare:camera-fx && vite build --config vite.config.ts && npm run normalize:electron-main-cjs && npm run smoke:electron-main-cjs && electron-builder --linux",
 		"i18n:check": "node scripts/i18n-check.mjs",
 		"benchmark:export-queues": "node scripts/benchmark-export-queues.mjs",
 		"normalize:electron-main-cjs": "node scripts/normalize-electron-main-cjs.mjs",
@@ -46,7 +46,8 @@
 		"test:watch": "vitest",
 		"typecheck": "tsc --noEmit",
 		"test:ui": "playwright test",
-		"dev:ui": "vite --mode ui --host 127.0.0.1"
+		"dev:ui": "vite --mode ui --host 127.0.0.1",
+		"prepare:camera-fx": "node scripts/prepare-camera-fx-assets.mjs"
 	},
 	"dependencies": {
 		"@phosphor-icons/react": "^2.1.10",
@@ -67,6 +68,7 @@
 		"@heroui/styles": "^3.2.6",
 		"@playwright/test": "^1.63.0",
 		"@tailwindcss/postcss": "^4.3.3",
+		"@mediapipe/tasks-vision": "1.0.1",
 		"@types/gif.js": "^0.2.5",
 		"@types/node": "^25.0.3",
 		"@types/react": "^19.3.0",

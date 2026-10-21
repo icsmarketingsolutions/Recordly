@@ -25,9 +25,10 @@ import {
 import type { useAppearanceState } from "../state/useAppearanceState";
 import type { useProjectState } from "../state/useProjectState";
 import type { useTimelineState } from "../state/useTimelineState";
-import { DEFAULT_WEBCAM_TIME_OFFSET_MS } from "../types";
+import { DEFAULT_WEBCAM_TIME_OFFSET_MS, type WebcamEffectsBake } from "../types";
 import type { VideoPlaybackRef } from "../VideoPlayback";
 import { cloneStructured } from "../videoEditorUtils";
+import { getActiveWebcamEffectsBake } from "../webcamOverlay";
 
 type Input = {
 	t: (key: string) => string;
@@ -374,6 +375,28 @@ export function useProjectLifecycle(input: Input) {
 		await syncRecordingSessionWebcam(null);
 		toast.success(input.t("settings.effects.webcamFootageRemoved"));
 	}, [appearance.setWebcam, syncRecordingSessionWebcam, input.t]);
+	const handleWebcamEffectsBaked = useCallback(
+		async (bake: WebcamEffectsBake) => {
+			appearance.setWebcam((previous) => ({
+				...previous,
+				sourcePath: bake.outputPath,
+				effects: bake.effects,
+				effectsBake: bake,
+			}));
+			await syncRecordingSessionWebcam(bake.outputPath);
+		},
+		[appearance.setWebcam, syncRecordingSessionWebcam],
+	);
+	const handleRestoreWebcamOriginal = useCallback(async () => {
+		const bake = getActiveWebcamEffectsBake(appearance.webcam);
+		if (!bake) return;
+		appearance.setWebcam((previous) => ({
+			...previous,
+			sourcePath: bake.originalPath,
+			effectsBake: null,
+		}));
+		await syncRecordingSessionWebcam(bake.originalPath);
+	}, [appearance.webcam, appearance.setWebcam, syncRecordingSessionWebcam]);
 
 	return {
 		applyLoadedProject,
@@ -386,5 +409,7 @@ export function useProjectLifecycle(input: Input) {
 		resetSourceScopedEditorState,
 		handleUploadWebcam,
 		handleClearWebcam,
+		handleWebcamEffectsBaked,
+		handleRestoreWebcamOriginal,
 	};
 }

@@ -1,9 +1,11 @@
 import { getLocalMediaServerPath } from "@/lib/localMediaUrl";
 import type { SourceAudioTrackSettings } from "@/components/video-editor/audio/audioTypes";
+import { normalizeCameraFxSettings } from "@/lib/cameraFx/settings";
 import { DEFAULT_WALLPAPER_PATH } from "@/lib/wallpapers";
 import { ASPECT_RATIOS, type AspectRatio, isCustomAspectRatio } from "@/utils/aspectRatioUtils";
 import { closeClipGaps, rippleRegionAnchors, rippleRegions } from "./clipSequence";
 import { CURSOR_MOTION_PRESETS, resolveCursorMotionPresetId } from "./cursorMotionPresets";
+import { loadCaptionGenerationDefaults, normalizeCaptionWordLimit } from "./rapidCaptions";
 import {
 	ADVANCED_VERTICAL_PADDING_MAX,
 	type AnnotationRegion,
@@ -63,7 +65,11 @@ import {
 	type ZoomRegion,
 	type ZoomTransitionEasing,
 } from "./types";
-import { convertLegacyWebcamRadiusToRoundness, normalizeWebcamCropRegion } from "./webcamOverlay";
+import {
+	convertLegacyWebcamRadiusToRoundness,
+	normalizeWebcamCropRegion,
+	normalizeWebcamEffectsBake,
+} from "./webcamOverlay";
 
 export const PROJECT_VERSION = 2;
 export const MACOS_DEFAULT_BORDER_RADIUS_PERCENT = 8;
@@ -696,6 +702,15 @@ export function normalizeProjectEditor(editor: Partial<ProjectEditorState>): Pro
 			? (editor.autoCaptionSettings as Partial<AutoCaptionSettings>)
 			: {};
 	const normalizedAutoCaptionSettings: AutoCaptionSettings = {
+		segmentationMode:
+			rawAutoCaptionSettings.segmentationMode === "phrase" ||
+			rawAutoCaptionSettings.segmentationMode === "rapid"
+				? rawAutoCaptionSettings.segmentationMode
+				: loadCaptionGenerationDefaults().segmentationMode,
+		wordsPerCaption: normalizeCaptionWordLimit(
+			rawAutoCaptionSettings.wordsPerCaption ??
+				loadCaptionGenerationDefaults().wordsPerCaption,
+		),
 		enabled:
 			typeof rawAutoCaptionSettings.enabled === "boolean"
 				? rawAutoCaptionSettings.enabled
@@ -954,6 +969,8 @@ export function normalizeProjectEditor(editor: Partial<ProjectEditorState>): Pro
 					? webcam.enabled
 					: DEFAULT_WEBCAM_OVERLAY.enabled,
 			sourcePath: webcamSourcePath,
+			effects: normalizeCameraFxSettings(webcam.effects),
+			effectsBake: normalizeWebcamEffectsBake(webcam.effectsBake, webcamSourcePath),
 			mirror:
 				typeof webcam.mirror === "boolean" ? webcam.mirror : DEFAULT_WEBCAM_OVERLAY.mirror,
 			cropRegion: normalizeWebcamCropRegion(webcam.cropRegion),

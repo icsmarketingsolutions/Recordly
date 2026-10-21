@@ -602,6 +602,9 @@ contextBridge.exposeInMainWorld("electronAPI", {
 	storeRecordedVideo: (videoData: ArrayBuffer, fileName: string) => {
 		return ipcRenderer.invoke("store-recorded-video", videoData, fileName);
 	},
+	storeCameraFxVideo: (videoData: ArrayBuffer) => {
+		return ipcRenderer.invoke("store-camera-fx-video", videoData);
+	},
 	storeMicrophoneSidecar: (
 		audioData: ArrayBuffer,
 		videoPath: string,
