@@ -163,6 +163,11 @@
 		"discardChanges": "Änderungen verwerfen",
 		"saveProject": "Projekt speichern"
 	},
+	"timelinePanel": {
+		"resizeHandle": "Ziehen, um die Zeitleiste zu vergrößern; Doppelklick setzt zurück",
+		"smallerTracks": "Kleinere Spuren",
+		"tallerTracks": "Größere Spuren"
+	},
 	"exportTips": {
 		"softwareGpu": "Die GPU-Beschleunigung ist in dieser Sitzung aus (Software-Rendering), der Export wird sehr langsam. Starte Recordly neu, um mit voller Geschwindigkeit zu exportieren.",
 		"autoZooms": "Tipp: Automatisch angewendete Zooms können in den Einstellungen deaktiviert werden",

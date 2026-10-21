@@ -1,6 +1,7 @@
 import type { RowDefinition } from "dnd-timeline";
 import { useRow } from "dnd-timeline";
-import { TIMELINE_CLIP_ROW_HEIGHT_PX, TIMELINE_ROW_MIN_HEIGHT_PX } from "./timelineLayout";
+import { getTimelineClipRowHeightPx, getTimelineRowHeightPx } from "./timelineLayout";
+import { useTimelineRowScale } from "./timelineRowScale";
 
 interface RowProps extends RowDefinition {
 	embedded?: boolean;
@@ -37,6 +38,9 @@ export default function Row({
 	onClick,
 }: RowProps) {
 	const { setNodeRef, rowWrapperStyle, rowStyle } = useRow({ id });
+	const rowScale = useTimelineRowScale();
+	const clipRowHeightPx = getTimelineClipRowHeightPx(rowScale);
+	const rowHeightPx = getTimelineRowHeightPx(rowScale);
 
 	return (
 		<div
@@ -60,13 +64,9 @@ export default function Row({
 					embedded || caption
 						? 20
 						: filmstrip || !compact
-							? TIMELINE_CLIP_ROW_HEIGHT_PX
-							: TIMELINE_ROW_MIN_HEIGHT_PX,
-				flexBasis: caption
-					? 20
-					: filmstrip || !compact
-						? TIMELINE_CLIP_ROW_HEIGHT_PX
-						: TIMELINE_ROW_MIN_HEIGHT_PX,
+							? clipRowHeightPx
+							: rowHeightPx,
+				flexBasis: caption ? 20 : filmstrip || !compact ? clipRowHeightPx : rowHeightPx,
 			}}
 		>
 			{label && (

@@ -10,9 +10,12 @@ import type { useTimelineProjection } from "../hooks/useTimelineProjection";
 import type { useZoomRegionCommands } from "../hooks/useZoomRegionCommands";
 import type { useTimelineState } from "../state/useTimelineState";
 import TimelineEditor, { type TimelineEditorHandle } from "../timeline/TimelineEditor";
+import { type TimelineRowScale, TimelineRowScaleProvider } from "../timeline/timelineRowScale";
 
 type Props = {
 	panelRef?: RefObject<HTMLDivElement | null>;
+	heightPx: number;
+	rowScale: TimelineRowScale;
 	timelineRef: RefObject<TimelineEditorHandle | null>;
 	timeline: ReturnType<typeof useTimelineState>;
 	projection: ReturnType<typeof useTimelineProjection>;
@@ -62,94 +65,96 @@ export function EditorTimelinePanel(props: Props) {
 			ref={props.panelRef}
 			tabIndex={-1}
 			data-timeline-panel
-			className="outline-none flex flex-shrink-0 flex-col bg-transparent px-4 pb-4 pt-2"
-			style={{ height: "22%", minHeight: 180, maxHeight: 280 }}
+			className="outline-none flex flex-shrink-0 flex-col bg-transparent px-4 pb-4 pt-1"
+			style={{ height: props.heightPx }}
 		>
-			<TimelineEditor
-				ref={timelineRef}
-				videoDuration={projection.timelineDuration}
-				currentTime={currentTime}
-				playheadTime={projection.timelinePlayheadTime}
-				onSeek={playback.handleTimelineSeek}
-				videoPath={videoPath}
-				videoSourcePath={videoSourcePath}
-				cursorTelemetrySourcePath={cursorTelemetrySourcePath}
-				cursorTelemetry={normalizedCursorTelemetry}
-				autoSuggestZoomsTrigger={autoSuggestZoomsTrigger}
-				onAutoSuggestZoomsConsumed={handleAutoSuggestZoomsConsumed}
-				disableSuggestedZooms={disableSuggestedZooms}
-				zoomRegions={timeline.zoomRegions}
-				onZoomAdded={zoomCommands.handleZoomAdded}
-				onZoomSuggested={zoomCommands.handleZoomSuggested}
-				onZoomSpanChange={zoomCommands.handleZoomSpanChange}
-				onZoomDelete={zoomCommands.handleZoomDelete}
-				selectedZoomId={timeline.selectedZoomId}
-				onSelectZoom={zoomCommands.handleSelectZoom}
-				trimRegions={timeline.trimRegions}
-				clipRegions={timeline.clipRegions}
-				onClipSplit={clipCommands.handleClipSplit}
-				onClipDelete={clipCommands.handleClipDelete}
-				onClipSpanChange={clipCommands.handleClipSpanChange}
-				selectedClipId={timeline.selectedClipId}
-				onSelectClip={clipCommands.handleSelectClip}
-				audioRegions={timeline.audioRegions}
-				onAudioAdded={audioCommands.handleAudioAdded}
-				onAudioSpanChange={audioCommands.handleAudioSpanChange}
-				onAudioDelete={audioCommands.handleAudioDelete}
-				selectedAudioId={timeline.selectedAudioId}
-				onSelectAudio={audioCommands.handleSelectAudio}
-				captionRegions={projection.effectiveCaptionRegions}
-				onCaptionSpanChange={(id, span) => {
-					const fragment = projection.effectiveCaptionRegions.find(
-						(cue) => cue.id === id,
-					);
-					if (!fragment) return;
-					captionCommands.handleCaptionRetime(
-						fragment.sourceCueId,
-						retimeCaptionFragment(fragment, span),
-					);
-				}}
-				selectedCaptionId={
-					projection.effectiveCaptionRegions.find(
-						(cue) =>
-							cue.sourceCueId === timeline.selectedCaptionId &&
-							currentTime * 1000 >= cue.startMs &&
-							currentTime * 1000 < cue.endMs,
-					)?.id ??
-					projection.effectiveCaptionRegions.find(
-						(cue) => cue.sourceCueId === timeline.selectedCaptionId,
-					)?.id ??
-					null
-				}
-				onSelectCaption={(id) => {
-					const fragment = projection.effectiveCaptionRegions.find(
-						(cue) => cue.id === id,
-					);
-					captionCommands.handleSelectCaption(fragment?.sourceCueId ?? null);
-					if (fragment) playback.handleTimelineSeek(fragment.startMs / 1000);
-				}}
-				onCaptionDelete={(id) => {
-					const fragment = projection.effectiveCaptionRegions.find(
-						(cue) => cue.id === id,
-					);
-					if (fragment) captionCommands.handleCaptionDelete(fragment.sourceCueId);
-				}}
-				onCaptionAdded={captionCommands.handleCaptionAdded}
-				captionsEnabled={timeline.autoCaptionSettings.enabled}
-				captionQuickAddEnabled={timeline.autoCaptionSettings.timelineQuickAdd}
-				annotationRegions={timeline.annotationRegions}
-				onAnnotationAdded={annotationCommands.handleAnnotationAdded}
-				onAnnotationSpanChange={annotationCommands.handleAnnotationSpanChange}
-				onAnnotationDelete={annotationCommands.handleAnnotationDelete}
-				selectedAnnotationId={timeline.selectedAnnotationId}
-				onSelectAnnotation={handleSelectAnnotation}
-				showSourceAudioTrack={timeline.clipRegions.some((clip) => clip.showSourceAudio)}
-				sourceAudioResourceVersion={timeline.sourceAudioFallbackRefreshKey}
-				sourceAudioTrackSettings={audio.activeSourceAudioTrackSettings}
-				getSourceAudioTrackSettingsForClip={audio.getSourceAudioTrackSettingsForClip}
-				onSourceAudioAvailabilityChange={timeline.setHasClipSourceAudio}
-				onSourceAudioTracksMetaChange={audio.onSourceAudioTracksMetaChange}
-			/>
+			<TimelineRowScaleProvider value={props.rowScale}>
+				<TimelineEditor
+					ref={timelineRef}
+					videoDuration={projection.timelineDuration}
+					currentTime={currentTime}
+					playheadTime={projection.timelinePlayheadTime}
+					onSeek={playback.handleTimelineSeek}
+					videoPath={videoPath}
+					videoSourcePath={videoSourcePath}
+					cursorTelemetrySourcePath={cursorTelemetrySourcePath}
+					cursorTelemetry={normalizedCursorTelemetry}
+					autoSuggestZoomsTrigger={autoSuggestZoomsTrigger}
+					onAutoSuggestZoomsConsumed={handleAutoSuggestZoomsConsumed}
+					disableSuggestedZooms={disableSuggestedZooms}
+					zoomRegions={timeline.zoomRegions}
+					onZoomAdded={zoomCommands.handleZoomAdded}
+					onZoomSuggested={zoomCommands.handleZoomSuggested}
+					onZoomSpanChange={zoomCommands.handleZoomSpanChange}
+					onZoomDelete={zoomCommands.handleZoomDelete}
+					selectedZoomId={timeline.selectedZoomId}
+					onSelectZoom={zoomCommands.handleSelectZoom}
+					trimRegions={timeline.trimRegions}
+					clipRegions={timeline.clipRegions}
+					onClipSplit={clipCommands.handleClipSplit}
+					onClipDelete={clipCommands.handleClipDelete}
+					onClipSpanChange={clipCommands.handleClipSpanChange}
+					selectedClipId={timeline.selectedClipId}
+					onSelectClip={clipCommands.handleSelectClip}
+					audioRegions={timeline.audioRegions}
+					onAudioAdded={audioCommands.handleAudioAdded}
+					onAudioSpanChange={audioCommands.handleAudioSpanChange}
+					onAudioDelete={audioCommands.handleAudioDelete}
+					selectedAudioId={timeline.selectedAudioId}
+					onSelectAudio={audioCommands.handleSelectAudio}
+					captionRegions={projection.effectiveCaptionRegions}
+					onCaptionSpanChange={(id, span) => {
+						const fragment = projection.effectiveCaptionRegions.find(
+							(cue) => cue.id === id,
+						);
+						if (!fragment) return;
+						captionCommands.handleCaptionRetime(
+							fragment.sourceCueId,
+							retimeCaptionFragment(fragment, span),
+						);
+					}}
+					selectedCaptionId={
+						projection.effectiveCaptionRegions.find(
+							(cue) =>
+								cue.sourceCueId === timeline.selectedCaptionId &&
+								currentTime * 1000 >= cue.startMs &&
+								currentTime * 1000 < cue.endMs,
+						)?.id ??
+						projection.effectiveCaptionRegions.find(
+							(cue) => cue.sourceCueId === timeline.selectedCaptionId,
+						)?.id ??
+						null
+					}
+					onSelectCaption={(id) => {
+						const fragment = projection.effectiveCaptionRegions.find(
+							(cue) => cue.id === id,
+						);
+						captionCommands.handleSelectCaption(fragment?.sourceCueId ?? null);
+						if (fragment) playback.handleTimelineSeek(fragment.startMs / 1000);
+					}}
+					onCaptionDelete={(id) => {
+						const fragment = projection.effectiveCaptionRegions.find(
+							(cue) => cue.id === id,
+						);
+						if (fragment) captionCommands.handleCaptionDelete(fragment.sourceCueId);
+					}}
+					onCaptionAdded={captionCommands.handleCaptionAdded}
+					captionsEnabled={timeline.autoCaptionSettings.enabled}
+					captionQuickAddEnabled={timeline.autoCaptionSettings.timelineQuickAdd}
+					annotationRegions={timeline.annotationRegions}
+					onAnnotationAdded={annotationCommands.handleAnnotationAdded}
+					onAnnotationSpanChange={annotationCommands.handleAnnotationSpanChange}
+					onAnnotationDelete={annotationCommands.handleAnnotationDelete}
+					selectedAnnotationId={timeline.selectedAnnotationId}
+					onSelectAnnotation={handleSelectAnnotation}
+					showSourceAudioTrack={timeline.clipRegions.some((clip) => clip.showSourceAudio)}
+					sourceAudioResourceVersion={timeline.sourceAudioFallbackRefreshKey}
+					sourceAudioTrackSettings={audio.activeSourceAudioTrackSettings}
+					getSourceAudioTrackSettingsForClip={audio.getSourceAudioTrackSettingsForClip}
+					onSourceAudioAvailabilityChange={timeline.setHasClipSourceAudio}
+					onSourceAudioTracksMetaChange={audio.onSourceAudioTracksMetaChange}
+				/>
+			</TimelineRowScaleProvider>
 		</div>
 	);
 }

@@ -48,6 +48,7 @@ import {
 	getTimelineRowsMinHeightPx,
 	TIMELINE_AXIS_HEIGHT_PX,
 } from "../../timelineLayout";
+import { useTimelineRowScale } from "../../timelineRowScale";
 import PlaybackCursor from "../playhead/PlaybackCursor";
 
 const HINT_CLIP = "Press C to split clip";
@@ -1093,8 +1094,12 @@ export default function TimelineCanvas({
 		const sourceAudioRows = showSourceAudioTrack ? sourceAudioTracks.length : 0;
 		return 2 + sourceAudioRows + annotationRowIds.size + audioRowIds.size;
 	}, [items, showSourceAudioTrack, sourceAudioTracks.length]);
-	const timelineRowsMinHeightPx = getTimelineRowsMinHeightPx(timelineRowCount);
-	const timelineContentMinHeightPx = getTimelineContentMinHeightPx(timelineRowCount);
+	const timelineRowScale = useTimelineRowScale();
+	const timelineRowsMinHeightPx = getTimelineRowsMinHeightPx(timelineRowCount, timelineRowScale);
+	const timelineContentMinHeightPx = getTimelineContentMinHeightPx(
+		timelineRowCount,
+		timelineRowScale,
+	);
 	const sideProperty = direction === "rtl" ? "right" : "left";
 	const {
 		canShowGhostPlayhead,

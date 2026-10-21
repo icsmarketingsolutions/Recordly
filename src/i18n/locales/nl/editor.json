@@ -165,6 +165,11 @@
 		"discardChanges": "Wijzigingen negeren",
 		"saveProject": "Project opslaan"
 	},
+	"timelinePanel": {
+		"resizeHandle": "Sleep om de tijdlijn te vergroten; dubbelklik om te herstellen",
+		"smallerTracks": "Kleinere sporen",
+		"tallerTracks": "Hogere sporen"
+	},
 	"exportTips": {
 		"softwareGpu": "GPU-versnelling staat uit in deze sessie (softwarerendering), dus dit exporteren wordt erg traag. Start Recordly opnieuw om op volle snelheid te exporteren.",
 		"autoZooms": "Tip: Schakel automatisch toegepaste zooms uit in de instellingen",

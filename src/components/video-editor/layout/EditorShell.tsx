@@ -33,6 +33,8 @@ import { EditorHeader } from "./EditorHeader";
 import { EditorPreviewPanel } from "./EditorPreviewPanel";
 import { EditorSidebar } from "./EditorSidebar";
 import { EditorTimelinePanel } from "./EditorTimelinePanel";
+import { TimelineResizeHandle } from "./TimelineResizeHandle";
+import { useTimelinePanelLayout } from "./useTimelinePanelLayout";
 
 type Props = {
 	t: ReturnType<typeof useI18n>["t"];
@@ -104,6 +106,7 @@ export function EditorShell(props: Props) {
 		library.setOpen(false);
 	}, [ui.activeEffectSection, library.setOpen]);
 	const timelinePanelRef = useRef<HTMLDivElement>(null);
+	const timelinePanelLayout = useTimelinePanelLayout();
 	const wasImporting = useRef(false);
 	useEffect(() => {
 		if (wasImporting.current && !library.importing) timelinePanelRef.current?.focus();
@@ -403,8 +406,19 @@ export function EditorShell(props: Props) {
 						setError={handlePreviewError}
 					/>
 				</div>
+				<TimelineResizeHandle
+					t={t}
+					rowScale={timelinePanelLayout.rowScale}
+					onPointerDown={timelinePanelLayout.beginResize}
+					onPointerMove={timelinePanelLayout.moveResize}
+					onPointerUp={timelinePanelLayout.endResize}
+					onReset={timelinePanelLayout.resetHeight}
+					onStepRowScale={timelinePanelLayout.stepRowScale}
+				/>
 				<EditorTimelinePanel
 					panelRef={timelinePanelRef}
+					heightPx={timelinePanelLayout.heightPx}
+					rowScale={timelinePanelLayout.rowScale}
 					timelineRef={ui.timelineRef}
 					timeline={timeline}
 					projection={projection}

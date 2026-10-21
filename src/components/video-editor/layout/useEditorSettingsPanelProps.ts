@@ -10,7 +10,11 @@ import type { useZoomRegionCommands } from "../hooks/useZoomRegionCommands";
 import { SettingsPanel } from "../SettingsPanel";
 import type { useAppearanceState } from "../state/useAppearanceState";
 import type { useTimelineState } from "../state/useTimelineState";
-import { type EditorEffectSection, mapTimelineTimeToSourceTime, type WebcamEffectsBake } from "../types";
+import {
+	type EditorEffectSection,
+	mapTimelineTimeToSourceTime,
+	type WebcamEffectsBake,
+} from "../types";
 
 type Input = {
 	activeEffectSection: EditorEffectSection;

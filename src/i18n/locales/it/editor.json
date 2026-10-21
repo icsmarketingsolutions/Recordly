@@ -164,6 +164,11 @@
 		"discardChanges": "Ignora modifiche",
 		"saveProject": "Salva progetto"
 	},
+	"timelinePanel": {
+		"resizeHandle": "Trascina per ridimensionare la timeline; doppio clic per ripristinare",
+		"smallerTracks": "Tracce più basse",
+		"tallerTracks": "Tracce più alte"
+	},
 	"exportTips": {
 		"softwareGpu": "L'accelerazione GPU è disattivata in questa sessione (rendering software): l'esportazione sarà molto lenta. Riavvia Recordly per esportare a piena velocità.",
 		"autoZooms": "Suggerimento: Disattiva gli zoom applicati automaticamente nelle impostazioni",

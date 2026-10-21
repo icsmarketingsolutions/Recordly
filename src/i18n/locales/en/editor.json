@@ -164,6 +164,11 @@
 		"discardChanges": "Discard changes",
 		"saveProject": "Save project"
 	},
+	"timelinePanel": {
+		"resizeHandle": "Drag to resize the timeline; double-click to reset",
+		"smallerTracks": "Smaller tracks",
+		"tallerTracks": "Taller tracks"
+	},
 	"exportTips": {
 		"softwareGpu": "GPU acceleration is off in this session (software rendering), so this export will be very slow. Restart Recordly to export at full speed.",
 		"autoZooms": "Tip: Turn off auto-applied zooms in settings",

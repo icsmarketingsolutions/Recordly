@@ -164,6 +164,11 @@
 		"discardChanges": "捨棄變更",
 		"saveProject": "儲存專案"
 	},
+	"timelinePanel": {
+		"resizeHandle": "拖曳調整時間軸高度；按兩下恢復預設",
+		"smallerTracks": "縮小軌道",
+		"tallerTracks": "放大軌道"
+	},
 	"exportTips": {
 		"softwareGpu": "本次工作階段已關閉 GPU 加速（軟體渲染），匯出會非常慢。請重新啟動 Recordly 以全速匯出。",
 		"autoZooms": "提示：可在設定中關閉自動套用的縮放",
