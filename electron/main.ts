@@ -818,6 +818,9 @@ function createEditorWindowWrapper() {
 		mainWindow = null;
 	}
 	const editorWindow = createEditorWindow();
+	// Creation is synchronous; releasing the guard here lets the next finished
+	// recording open its own window while this one stays open.
+	isCreatingEditorWindow = false;
 	mainWindow = editorWindow;
 	editorUnsavedChanges.set(editorWindow, false);
 
