@@ -198,7 +198,7 @@ describe("getHudOverlayVirtualWorkArea", () => {
 				],
 				{ x: 0, y: 0, width: 1920, height: 1040 },
 			),
-		).toEqual({ x: 0, y: -200, width: 4480, height: 1600 });
+		).toEqual({ x: 0, y: -200, width: 4480, height: 1400 });
 	});
 
 	it("falls back to the given area when no displays are known", () => {
