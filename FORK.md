@@ -69,7 +69,7 @@ Variables útiles: `_WEBCAM_INPUT`, `_BACKEND` (`auto|breeze|webcodecs`),
 
 Lanzar el paquete con `--remote-debugging-port=9333 --user-data-dir=<carpeta aparte>` y
 manejar la HUD por el protocolo de DevTools (la API del preload queda en `window.electronAPI`).
-Los guiones usados el 21-oct-2026 (`e2e-retake.mjs`, `e2e-multiwindow.mjs`) seleccionan
+Los guiones en `scripts/e2e/` (`e2e-retake.mjs`, `e2e-multiwindow.mjs`, `cdp.mjs`) seleccionan
 la pantalla, graban, rehacen/cancelan y comprueban los archivos y las ventanas. Para
 probar siempre hay que cerrar solo los procesos cuyo `CommandLine` contenga esa carpeta
 de datos, nunca la Recordly del usuario.
