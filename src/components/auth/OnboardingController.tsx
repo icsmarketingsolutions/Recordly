@@ -33,19 +33,17 @@ export function OnboardingController({
 		setOpen(false);
 	}, []);
 
+	// This fork never forces the sign-in onboarding: recording and saving are local.
+	// The dialog only opens when asked for (settings, macOS permissions) and can
+	// always be dismissed.
 	useEffect(() => {
-		if (!ready) return;
-		if (!user) {
-			setOpen(true);
-			return;
-		}
-		if (checked.current) return;
+		if (!ready || checked.current) return;
 		checked.current = true;
 		if (loadAppSetting<boolean>("recordly.onboarding.permissionsRequested")) {
 			setStartWithPermissions(true);
 			setOpen(true);
-		} else if (!loadAppSetting<boolean>(SEEN_KEY)) setOpen(true);
-	}, [ready, user]);
+		}
+	}, [ready]);
 
 	useEffect(
 		() =>
@@ -57,7 +55,6 @@ export function OnboardingController({
 	);
 
 	const finish = () => {
-		if (!user) return;
 		saveAppSetting(SEEN_KEY, true);
 		close();
 		void window.electronAPI.showRecordingHud();
@@ -70,7 +67,7 @@ export function OnboardingController({
 			variant="wide"
 			open={open}
 			onOpenChange={(value) => {
-				if (!value && user) close();
+				if (!value) close();
 			}}
 			user={user}
 			configured={configured}

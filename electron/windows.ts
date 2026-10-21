@@ -12,6 +12,7 @@ import {
 } from "../src/lib/hudCaptureProtection";
 import { USER_DATA_PATH } from "./appPaths";
 import {
+	getHudOverlayVirtualWorkArea,
 	getHudOverlayWindowBounds,
 	resizeHudOverlayFallbackBounds,
 	shouldExpandHudOverlayFallback,
@@ -237,17 +238,23 @@ function getHudOverlayDisplay() {
 }
 
 function getHudOverlayBounds() {
-	const { workArea } = getHudOverlayDisplay();
+	const { workArea: displayWorkArea } = getHudOverlayDisplay();
+	const passthrough = isHudOverlayMousePassthroughSupported();
+	// Passthrough mode: span every monitor so the bar can be dragged to any of them.
+	const workArea = passthrough
+		? getHudOverlayVirtualWorkArea(
+				getScreen()
+					.getAllDisplays()
+					.map((display) => display.workArea),
+				displayWorkArea,
+			)
+		: displayWorkArea;
 	const fallbackExpanded = shouldExpandHudOverlayFallback({
 		fallbackExpanded: hudOverlayFallbackExpanded,
 		recordingActive: hudOverlayRecordingActive,
 		webcamPreviewVisible: hudOverlayWebcamPreviewVisible,
 	});
-	return getHudOverlayWindowBounds(
-		workArea,
-		isHudOverlayMousePassthroughSupported(),
-		fallbackExpanded,
-	);
+	return getHudOverlayWindowBounds(workArea, passthrough, fallbackExpanded);
 }
 
 function applyHudOverlayBounds() {

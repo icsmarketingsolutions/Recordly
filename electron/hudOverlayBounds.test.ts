@@ -1,6 +1,7 @@
-import { describe, expect, it } from "vitest";
+import { getHudOverlayVirtualWorkArea, describe, expect, it } from "vitest";
 
 import {
+	getHudOverlayVirtualWorkArea,
 	getHudOverlayWindowBounds,
 	resizeHudOverlayFallbackBounds,
 	shouldExpandHudOverlayFallback,
@@ -184,5 +185,24 @@ describe("shouldExpandHudOverlayFallback", () => {
 				webcamPreviewVisible: true,
 			}),
 		).toBe(false);
+	});
+});
+
+describe("getHudOverlayVirtualWorkArea", () => {
+	it("spans every monitor so the HUD can be dragged to a second screen", () => {
+		expect(
+			getHudOverlayVirtualWorkArea(
+				[
+					{ x: 0, y: 0, width: 1920, height: 1040 },
+					{ x: 1920, y: -200, width: 2560, height: 1400 },
+				],
+				{ x: 0, y: 0, width: 1920, height: 1040 },
+			),
+		).toEqual({ x: 0, y: -200, width: 4480, height: 1600 });
+	});
+
+	it("falls back to the given area when no displays are known", () => {
+		const fallback = { x: 0, y: 0, width: 800, height: 600 };
+		expect(getHudOverlayVirtualWorkArea([], fallback)).toEqual(fallback);
 	});
 });

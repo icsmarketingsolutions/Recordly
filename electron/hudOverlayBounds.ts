@@ -13,6 +13,21 @@ function clamp(value: number, min: number, max: number): number {
 	return Math.min(Math.max(value, min), max);
 }
 
+// With mouse passthrough the HUD lives inside one transparent window and the bar is
+// dragged around within it, so the window has to cover every monitor for the bar
+// to reach a second screen. The union of all work areas is that window.
+export function getHudOverlayVirtualWorkArea(
+	workAreas: HudOverlayWorkArea[],
+	fallback: HudOverlayWorkArea,
+): HudOverlayWorkArea {
+	if (workAreas.length === 0) return { ...fallback };
+	const left = Math.min(...workAreas.map((area) => area.x));
+	const top = Math.min(...workAreas.map((area) => area.y));
+	const right = Math.max(...workAreas.map((area) => area.x + area.width));
+	const bottom = Math.max(...workAreas.map((area) => area.y + area.height));
+	return { x: left, y: top, width: right - left, height: bottom - top };
+}
+
 export function getHudOverlayWindowBounds(
 	workArea: HudOverlayWorkArea,
 	mousePassthroughSupported: boolean,
