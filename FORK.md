@@ -29,6 +29,29 @@ nuestros cambios encima. `rapid-captions` y `camera-fx` son las ramas histórica
   reencoda (con NVENC/QSV/AMF/MF si están, libx264 si no; barra de progreso por fases)
   y concatena en `.recordly-media/<uuid>.mp4` (un solo archivo fuente, clips
   con `sourceMinMs/sourceMaxMs`); subtítulos del clip nuevo hay que regenerarlos.
+  Desde el 22-oct **no reencoda** lo que ya es H.264 yuv420p a la resolución y fps de la
+  secuencia (tolerancia de 1,5 fps porque las grabaciones son de tasa variable): base y
+  clip se copian y solo se mezcla el audio. Verificado: decodificación bit a bit (SSIM
+  0,99999) y export 1080p por WebGPU. No usar `dump_extra` en el concat: el SPS/PPS en
+  banda duplicado hace que WebCodecs rechace la primera muestra.
+- **Regrabar este clip** (panel del clip seleccionado): abre la HUD, la toma nueva entra
+  en la posición del clip viejo y el viejo se descarta en el mismo ripple (deshacible).
+- **Quitar pausas** (botón junto a Dividir clip): `silencedetect` sobre la pista mezclada
+  de la grabación (`detect-recording-silences`), popover con pausa mínima, margen y
+  umbral; `planSilenceRemoval` parte los clips en los cortes y empaqueta el resto, los
+  efectos se re-proyectan pieza por pieza y todo es un solo paso de deshacer. Nunca vacía
+  la timeline. E2E: 15 pausas en un video real (2 → 13 clips, deshacer vuelve a 2).
+- **Subtítulos**: glosario por proyecto (`autoCaptionSettings.glossary`) que va a
+  whisper-cli como `--prompt`; selector de modelo (small / medium / large-v3-turbo,
+  descarga desde Hugging Face, elección recordada por máquina). El whisper-cli
+  empaquetado es solo CPU: para acelerar hay que apuntar «Whisper executable» a una
+  build CUDA/Vulkan de whisper.cpp.
+- **Presets de exportación** en un clic (Publish → Local): Instagram Reel 9:16 (original,
+  30 fps), YouTube 16:9 (original, 60 fps, calidad) y WhatsApp (archivo liviano).
+- **Atajos globales mientras se graba** (aunque la HUD esté oculta o sin foco):
+  Ctrl/Cmd+Shift+S detener, +P pausar/reanudar, +R volver a grabar, +X cancelar.
+  Se registran solo durante la grabación. La HUD reabre en el monitor al que se la
+  arrastró por última vez (`hudOverlayDisplayId` en `app-settings.json`).
 - **Sin cuenta obligatoria**: grabar y guardar nunca piden iniciar sesión; el onboarding
   del upstream solo se abre a pedido y siempre se puede cerrar.
 
@@ -78,10 +101,13 @@ Variables útiles: `_WEBCAM_INPUT`, `_BACKEND` (`auto|breeze|webcodecs`),
 
 Lanzar el paquete con `--remote-debugging-port=9333 --user-data-dir=<carpeta aparte>` y
 manejar la HUD por el protocolo de DevTools (la API del preload queda en `window.electronAPI`).
-Los guiones en `scripts/e2e/` (`e2e-retake.mjs`, `e2e-multiwindow.mjs`, `e2e-append-take.mjs`, `cdp.mjs`) seleccionan
+Los guiones en `scripts/e2e/` (`e2e-retake.mjs`, `e2e-multiwindow.mjs`, `e2e-append-take.mjs`,
+`e2e-remove-silences*.mjs`, `e2e-new-controls.mjs`, `e2e-shortcut-start.mjs`, `cdp.mjs`) seleccionan
 la pantalla, graban, rehacen/cancelan y comprueban los archivos y las ventanas. Para
 probar siempre hay que cerrar solo los procesos cuyo `CommandLine` contenga esa carpeta
-de datos, nunca la Recordly del usuario.
+de datos, nunca la Recordly del usuario. Los controles de HeroUI necesitan eventos de
+puntero reales (`pointerdown/up` + `click`), no un `click()` suelto; el atajo global se
+prueba con `SendKeys` de PowerShell (ver `e2e-shortcut-start.mjs`).
 
 ## Sincronizar con el upstream
 
