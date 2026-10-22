@@ -115,9 +115,27 @@ async function probe(file: string, signal?: AbortSignal) {
 		fps: meta.frameRate,
 		duration: meta.duration,
 		audio: meta.hasAudio,
+		codec: meta.codec,
+		pixelFormat: meta.pixelFormat,
 	};
 }
 type Format = { width: number; height: number; fps: number };
+type Probe = Awaited<ReturnType<typeof probe>>;
+
+/**
+ * H.264 yuv420p footage already in the sequence format needs no re-encode: the
+ * concat step copies it (with its SPS/PPS carried in-band), which turns a long
+ * append into seconds and avoids a generation loss.
+ */
+export function canStreamCopyIntoSequence(meta: Probe, format: Format): boolean {
+	return (
+		/^h264\b/i.test(meta.codec ?? "") &&
+		meta.pixelFormat === "yuv420p" &&
+		meta.width === format.width &&
+		meta.height === format.height &&
+		Math.abs(meta.fps - format.fps) < 0.01
+	);
+}
 
 /** Normalize new media once. Existing sequence video is copied, avoiding generation loss. */
 async function normalize(
@@ -227,16 +245,20 @@ export async function importRecording(
 	try {
 		const normalizedBase = path.join(work, "base.mkv");
 		const normalizedNew = path.join(work, "new.mkv");
-		// Only our own normalized source format may be copied across appends.
-		const copyVideo = isLibrarySequenceSource(current);
 		const encoders = await pickImportEncoders();
-		console.log(`[import-recording] encoder candidates: ${encoders.join(", ")}`);
 		const added = await probe(sourcePath, signal);
+		// Our own sequence output and any H.264 footage already in the sequence
+		// format are copied; everything else is normalized through the encoder.
+		const copyVideo = isLibrarySequenceSource(current) || canStreamCopyIntoSequence(base, format);
+		const copyAdded = canStreamCopyIntoSequence(added, format);
+		console.log(
+			`[import-recording] encoder candidates: ${encoders.join(", ")}; copy base=${copyVideo} clip=${copyAdded}`,
+		);
 		// Progress is weighted by how much work each phase does: a stream copy of the
 		// base is cheap, the mix pass runs over the whole combined length.
 		const weights = {
 			base: copyVideo ? base.duration * 0.15 : base.duration,
-			clip: added.duration,
+			clip: copyAdded ? added.duration * 0.15 : added.duration,
 			mix: (base.duration + added.duration) * 0.25,
 		};
 		const total = weights.base + weights.clip + weights.mix || 1;
@@ -249,7 +271,8 @@ export async function importRecording(
 							(seconds / Math.max(base.duration, 0.001)) * weights.base,
 						)
 					: phase === "clip"
-						? weights.base + Math.min(weights.clip, seconds)
+						? weights.base +
+							Math.min(weights.clip, (seconds / Math.max(added.duration, 0.001)) * weights.clip)
 						: weights.base +
 							weights.clip +
 							Math.min(
@@ -266,7 +289,7 @@ export async function importRecording(
 			report("base", seconds),
 		);
 		report("clip", 0);
-		await normalize(sourcePath, normalizedNew, format, false, signal, encoders, (seconds) =>
+		await normalize(sourcePath, normalizedNew, format, copyAdded, signal, encoders, (seconds) =>
 			report("clip", seconds),
 		);
 		report("mix", 0);
@@ -286,6 +309,10 @@ export async function importRecording(
 				"0",
 				"-c",
 				"copy",
+				// Pieces may come from different encoders: carry each one's SPS/PPS
+				// in-band so every keyframe decodes with its own parameters.
+				"-bsf:v",
+				"dump_extra=freq=keyframe",
 				combined,
 			],
 			signal,

@@ -11,6 +11,8 @@ export interface NativeVideoMetadataProbe {
 	streamDuration?: number;
 	frameRate: number;
 	codec: string;
+	/** e.g. `yuv420p`, parsed from the stream line when present. */
+	pixelFormat?: string;
 	hasAudio: boolean;
 	audioCodec?: string;
 	audioSampleRate?: number;
@@ -76,6 +78,7 @@ export function parseNativeVideoMetadataProbeOutput(
 	}
 
 	const videoCodecMatch = videoLine.match(/Video:\s*([^,\r\n]+)/i);
+	const pixelFormatMatch = videoLine.match(/Video:\s*[^,\r\n]+,\s*([a-z0-9]+)/i);
 	const videoStartMatch = videoLine.match(/\bstart:\s*(-?[0-9]+(?:\.[0-9]+)?)/i);
 	const frameRate = parseFfmpegFrameRate(videoLine) ?? 60;
 	const audioLine = lines.find((line) => /\bAudio:\s*/i.test(line));
@@ -91,6 +94,7 @@ export function parseNativeVideoMetadataProbeOutput(
 		streamDuration: duration,
 		frameRate,
 		codec: videoCodecMatch?.[1]?.trim() || "unknown",
+		pixelFormat: pixelFormatMatch?.[1]?.toLowerCase(),
 		hasAudio: Boolean(audioLine),
 		audioCodec: audioCodecMatch?.[1]?.trim(),
 		audioSampleRate: audioSampleRateMatch ? Number(audioSampleRateMatch[1]) : undefined,
