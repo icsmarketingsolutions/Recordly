@@ -34,6 +34,32 @@ export function useHudBarDrag({
 	const isHudDraggingRef = useRef(false);
 	const hudDragMoveRafRef = useRef<number | null>(null);
 	const hudDragPendingPointerRef = useRef<{ clientX: number; clientY: number } | null>(null);
+	const followCursorAtRef = useRef(0);
+
+	// When the overlay window jumps to another monitor mid-drag, re-base the drag so
+	// the bar stays under the pointer in the new window's coordinates.
+	useEffect(
+		() =>
+			window.electronAPI?.onHudOverlayDisplayChanged?.(({ cursorX, cursorY }) => {
+				const dragState = hudDragStartRef.current;
+				if (!dragState) return;
+				const grabX = dragState.startX - dragState.initialLeft;
+				const grabY = dragState.startY - dragState.initialTop;
+				const nextLeft = cursorX - grabX;
+				const nextTop = cursorY - grabY;
+				hudDragStartRef.current = {
+					...dragState,
+					startX: cursorX,
+					startY: cursorY,
+					originX: dragState.originX + (nextLeft - dragState.initialLeft),
+					originY: dragState.originY + (nextTop - dragState.initialTop),
+					initialLeft: nextLeft,
+					initialTop: nextTop,
+				};
+				hudDragPendingPointerRef.current = { clientX: cursorX, clientY: cursorY };
+			}),
+		[],
+	);
 
 	useEffect(() => {
 		recordingHudOffsetRef.current = recordingHudOffset;
@@ -119,6 +145,15 @@ export function useHudBarDrag({
 		}
 
 		hudDragPendingPointerRef.current = { clientX: event.clientX, clientY: event.clientY };
+		const outsideViewport =
+			event.clientX < 0 ||
+			event.clientY < 0 ||
+			event.clientX > window.innerWidth ||
+			event.clientY > window.innerHeight;
+		if (outsideViewport && performance.now() - followCursorAtRef.current > 150) {
+			followCursorAtRef.current = performance.now();
+			window.electronAPI?.hudOverlayFollowCursor?.();
+		}
 		if (hudDragMoveRafRef.current !== null) {
 			return;
 		}

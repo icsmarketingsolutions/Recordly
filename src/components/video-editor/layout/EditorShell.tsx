@@ -451,6 +451,30 @@ export function EditorShell(props: Props) {
 						<p className="mt-2 text-sm text-muted-foreground">
 							{t("editor.cloud.preparingFootage")}
 						</p>
+						<div
+							className="mx-auto mt-4 h-2 w-72 overflow-hidden rounded-full bg-foreground/10"
+							role="progressbar"
+							aria-valuemin={0}
+							aria-valuemax={100}
+							aria-valuenow={Math.round(library.importProgress?.percent ?? 0)}
+						>
+							<div
+								className="h-full rounded-full bg-accent transition-[width] duration-300"
+								style={{
+									width: `${Math.round(library.importProgress?.percent ?? 0)}%`,
+								}}
+							/>
+						</div>
+						<p className="mt-2 text-xs tabular-nums text-muted-foreground">
+							{Math.round(library.importProgress?.percent ?? 0)}%
+							{library.importProgress?.phase === "base"
+								? " · preparing the current footage"
+								: library.importProgress?.phase === "clip"
+									? " · encoding the new clip"
+									: library.importProgress?.phase === "mix"
+										? " · mixing audio and writing the file"
+										: ""}
+						</p>
 						<Button
 							className="mt-4"
 							variant="ghost"

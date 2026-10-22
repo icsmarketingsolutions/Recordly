@@ -90,6 +90,17 @@ export function useRecordingLibrary(
 		}
 	};
 	const [importing, setImporting] = useState(false);
+	const [importProgress, setImportProgress] = useState<{
+		percent: number;
+		phase: "base" | "clip" | "mix";
+	} | null>(null);
+	useEffect(
+		() =>
+			window.electronAPI.onRecordingImportProgress?.((progress) =>
+				setImportProgress(progress),
+			),
+		[],
+	);
 	const cancelled = useRef(false);
 	const [cancelling, setCancelling] = useState(false);
 	const cancelImport = async () => {
@@ -108,6 +119,7 @@ export function useRecordingLibrary(
 		lock.current = true;
 		cancelled.current = false;
 		setCancelling(false);
+		setImportProgress(null);
 		setImporting(true);
 		current.current.ui.videoPlaybackRef.current?.pause();
 		current.current.ui.setIsPlaying(false);
@@ -282,6 +294,7 @@ export function useRecordingLibrary(
 		undo,
 		canUndo: removed.length > 0,
 		importing,
+		importProgress,
 		cancelling,
 		cancelImport,
 		addToTimeline,

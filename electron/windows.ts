@@ -12,7 +12,6 @@ import {
 } from "../src/lib/hudCaptureProtection";
 import { USER_DATA_PATH } from "./appPaths";
 import {
-	getHudOverlayVirtualWorkArea,
 	getHudOverlayWindowBounds,
 	resizeHudOverlayFallbackBounds,
 	shouldExpandHudOverlayFallback,
@@ -237,18 +236,9 @@ function getHudOverlayDisplay() {
 	return getScreen().getPrimaryDisplay();
 }
 
-function getHudOverlayBounds() {
-	const { workArea: displayWorkArea } = getHudOverlayDisplay();
+function getHudOverlayBounds(display = getHudOverlayDisplay()) {
+	const { workArea } = display;
 	const passthrough = isHudOverlayMousePassthroughSupported();
-	// Passthrough mode: span every monitor so the bar can be dragged to any of them.
-	const workArea = passthrough
-		? getHudOverlayVirtualWorkArea(
-				getScreen()
-					.getAllDisplays()
-					.map((display) => display.workArea),
-				displayWorkArea,
-			)
-		: displayWorkArea;
 	const fallbackExpanded = shouldExpandHudOverlayFallback({
 		fallbackExpanded: hudOverlayFallbackExpanded,
 		recordingActive: hudOverlayRecordingActive,
@@ -440,6 +430,25 @@ ipcMain.on("hud-overlay-drag", (_event, phase: string, screenX: number, screenY:
 		hudDragLastCursor = null;
 		hudDragFixedSize = null;
 	}
+});
+
+// With mouse passthrough the bar is dragged inside a window that covers one
+// display. When the pointer leaves that display mid-drag, move the window to
+// the display under the cursor so the bar can follow it to another monitor.
+ipcMain.on("hud-overlay-follow-cursor", (event) => {
+	if (!hudOverlayWindow || hudOverlayWindow.isDestroyed()) return;
+	if (!isHudOverlayMousePassthroughSupported()) return;
+	const screen = getScreen();
+	const cursor = screen.getCursorScreenPoint();
+	const target = screen.getDisplayNearestPoint(cursor);
+	if (target.id === getHudOverlayDisplay().id) return;
+	hudOverlayWindow.setBounds(getHudOverlayBounds(target), false);
+	const bounds = hudOverlayWindow.getBounds();
+	if (!event.sender.isDestroyed())
+		event.sender.send("hud-overlay-display-changed", {
+			cursorX: cursor.x - bounds.x,
+			cursorY: cursor.y - bounds.y,
+		});
 });
 
 ipcMain.on("hud-overlay-hide", () => {

@@ -221,6 +221,10 @@ interface Window {
 		hudOverlaySetIgnoreMouse: (ignore: boolean) => void;
 		hudOverlaySetSourceSelectionActive: (active: boolean) => void;
 		hudOverlayDrag: (phase: "start" | "move" | "end", screenX: number, screenY: number) => void;
+		hudOverlayFollowCursor?: () => void;
+		onHudOverlayDisplayChanged?: (
+			callback: (cursor: { cursorX: number; cursorY: number }) => void,
+		) => () => void;
 		hudOverlayHide: () => void;
 		hudOverlayClose: () => void;
 		getEditorMode: () => Promise<boolean>;
@@ -792,6 +796,9 @@ interface Window {
 				import("../src/types/projectPreview").ProjectPreviewData
 			>
 		>;
+		onRecordingImportProgress?: (
+			callback: (progress: { percent: number; phase: "base" | "clip" | "mix" }) => void,
+		) => () => void;
 		listRecordings: (
 			includeSources?: boolean,
 		) => Promise<

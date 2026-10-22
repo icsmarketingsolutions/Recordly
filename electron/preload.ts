@@ -193,6 +193,19 @@ contextBridge.exposeInMainWorld("electronAPI", {
 	hudOverlayDrag: (phase: "start" | "move" | "end", screenX: number, screenY: number) => {
 		ipcRenderer.send("hud-overlay-drag", phase, screenX, screenY);
 	},
+	hudOverlayFollowCursor: () => {
+		ipcRenderer.send("hud-overlay-follow-cursor");
+	},
+	onHudOverlayDisplayChanged: (
+		callback: (cursor: { cursorX: number; cursorY: number }) => void,
+	) => {
+		const listener = (
+			_event: Electron.IpcRendererEvent,
+			cursor: { cursorX: number; cursorY: number },
+		) => callback(cursor);
+		ipcRenderer.on("hud-overlay-display-changed", listener);
+		return () => ipcRenderer.removeListener("hud-overlay-display-changed", listener);
+	},
 	hudOverlayHide: () => {
 		ipcRenderer.send("hud-overlay-hide");
 	},
@@ -841,6 +854,16 @@ contextBridge.exposeInMainWorld("electronAPI", {
 	cancelRecordingImport: () => ipcRenderer.invoke("cancel-recording-import"),
 	getProjectPreview: (projectPath: string) =>
 		ipcRenderer.invoke("get-project-preview", projectPath),
+	onRecordingImportProgress: (
+		callback: (progress: { percent: number; phase: "base" | "clip" | "mix" }) => void,
+	) => {
+		const listener = (
+			_event: Electron.IpcRendererEvent,
+			progress: { percent: number; phase: "base" | "clip" | "mix" },
+		) => callback(progress);
+		ipcRenderer.on("recording-import-progress", listener);
+		return () => ipcRenderer.removeListener("recording-import-progress", listener);
+	},
 	listRecordings: (includeSources?: boolean) =>
 		ipcRenderer.invoke("list-recordings", includeSources),
 	setRecordingsRemoved: (paths: string[], removed: boolean) =>

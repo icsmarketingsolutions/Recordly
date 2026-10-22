@@ -1,11 +1,10 @@
 import { composeSequenceWebcam, sequenceWebcamOutputs } from "./sequenceWebcam";
 import { probeNativeVideoMetadata } from "../ffmpeg/metadata";
 import { isLibrarySequenceSource } from "./sequenceSource";
-import { execFile } from "node:child_process";
+import { spawn } from "node:child_process";
 import { randomUUID } from "node:crypto";
 import fs from "node:fs/promises";
 import path from "node:path";
-import { promisify } from "node:util";
 import { buildMediaUrl, getMediaServerBaseUrl } from "../../mediaServer";
 import { getFfmpegBinaryPath } from "../ffmpeg/binary";
 import { rememberApprovedLocalReadPath, resolveApprovedLocalMediaPath } from "../project/manager";
@@ -14,18 +13,91 @@ import { getUsableCompanionAudioCandidates } from "./diagnostics";
 import { normalizeCursorTelemetrySamples, writeCursorTelemetry } from "../cursor/telemetry";
 import { listRecordings } from "./library";
 import { isApprovedExternalImport } from "./clipSources";
+import { resolveNativeVideoEncoder } from "../export/native-video";
 import type {
 	RecordingImportResult,
 	RecordingWebcamSource,
 } from "../../../src/types/recordingLibrary";
 
-const run = promisify(execFile);
-async function ffmpeg(args: string[], signal?: AbortSignal) {
-	await run(
-		getFfmpegBinaryPath(),
-		["-hide_banner", "-loglevel", "error", "-nostdin", "-y", ...args],
-		{ signal, timeout: 60 * 60 * 1000, maxBuffer: 1024 * 1024, windowsHide: true },
-	);
+const FFMPEG_TIMEOUT_MS = 60 * 60 * 1000;
+
+export interface RecordingImportProgress {
+	/** 0–100 across the whole import. */
+	percent: number;
+	phase: "base" | "clip" | "mix";
+}
+
+// Runs ffmpeg and, when asked, reports the output timestamp it has reached
+// (`-progress pipe:1`) so the editor can show how far the import is.
+async function ffmpeg(args: string[], signal?: AbortSignal, onTime?: (seconds: number) => void) {
+	await new Promise<void>((resolve, reject) => {
+		const child = spawn(
+			getFfmpegBinaryPath(),
+			[
+				"-hide_banner",
+				"-loglevel",
+				"error",
+				"-nostdin",
+				"-y",
+				...(onTime ? ["-progress", "pipe:1", "-nostats"] : []),
+				...args,
+			],
+			{ signal, windowsHide: true },
+		);
+		let stderr = "";
+		let pending = "";
+		child.stdout?.on("data", (chunk: Buffer) => {
+			if (!onTime) return;
+			pending += chunk.toString();
+			const lines = pending.split(/\r?\n/);
+			pending = lines.pop() ?? "";
+			for (const line of lines) {
+				const match = /^out_time_(us|ms)=(\d+)/.exec(line);
+				if (match) onTime(Number(match[2]) / 1_000_000);
+			}
+		});
+		child.stderr?.on("data", (chunk: Buffer) => {
+			stderr = (stderr + chunk.toString()).slice(-4000);
+		});
+		const timer = setTimeout(() => child.kill(), FFMPEG_TIMEOUT_MS);
+		child.on("error", (error) => {
+			clearTimeout(timer);
+			reject(error);
+		});
+		child.on("close", (code) => {
+			clearTimeout(timer);
+			if (code === 0) resolve();
+			else reject(new Error(`ffmpeg exited with code ${code}: ${stderr.trim()}`));
+		});
+	});
+}
+
+// Encoder-specific quality settings, visually on par with libx264 crf 18.
+function importEncoderArgs(encoder: string): string[] {
+	switch (encoder) {
+		case "h264_nvenc":
+			return ["-preset", "p4", "-rc", "vbr", "-cq", "19", "-b:v", "0", "-profile:v", "high"];
+		case "h264_qsv":
+			return ["-global_quality", "19", "-preset", "medium"];
+		case "h264_amf":
+			return ["-quality", "balanced", "-rc", "cqp", "-qp_i", "19", "-qp_p", "19"];
+		case "h264_videotoolbox":
+			return ["-q:v", "65"];
+		case "h264_mf":
+			return ["-rate_control", "quality", "-quality", "80"];
+		default:
+			return ["-preset", "fast", "-crf", "18"];
+	}
+}
+
+// A GPU encoder (NVENC/QSV/AMF/VideoToolbox) turns a multi-minute re-encode into
+// seconds; libx264 remains the fallback when none works.
+async function pickImportEncoder() {
+	try {
+		return await resolveNativeVideoEncoder(getFfmpegBinaryPath(), "balanced");
+	} catch {
+		return "libx264";
+	}
 }
 async function probe(file: string, signal?: AbortSignal) {
 	const meta = await probeNativeVideoMetadata(getFfmpegBinaryPath(), file, signal);
@@ -46,6 +118,8 @@ async function normalize(
 	format: Format,
 	copyVideo: boolean,
 	signal?: AbortSignal,
+	encoder = "libx264",
+	onTime?: (seconds: number) => void,
 ) {
 	const meta = await probe(file, signal);
 	const candidates = await getUsableCompanionAudioCandidates(file);
@@ -99,11 +173,11 @@ async function normalize(
 		"-map",
 		"[mic]",
 		"-c:v",
-		copyVideo ? "copy" : "libx264",
+		copyVideo ? "copy" : encoder,
 	);
-	if (!copyVideo) args.push("-preset", "fast", "-crf", "18");
+	if (!copyVideo) args.push(...importEncoderArgs(encoder));
 	args.push("-c:a", "pcm_s16le", "-t", String(meta.duration), out);
-	await ffmpeg(args, signal);
+	await ffmpeg(args, signal, onTime);
 }
 
 /** The editor and export share one immutable source, with stable offsets across imports. */
@@ -112,6 +186,7 @@ export async function importRecording(
 	recordingPath: string,
 	currentWebcam?: RecordingWebcamSource,
 	signal?: AbortSignal,
+	onProgress?: (progress: RecordingImportProgress) => void,
 ): Promise<RecordingImportResult> {
 	const entry = (await listRecordings()).find((entry) => entry.path === recordingPath);
 	const sourcePath =
@@ -139,8 +214,46 @@ export async function importRecording(
 		const normalizedNew = path.join(work, "new.mkv");
 		// Only our own normalized source format may be copied across appends.
 		const copyVideo = isLibrarySequenceSource(current);
-		await normalize(current, normalizedBase, format, copyVideo, signal);
-		await normalize(sourcePath, normalizedNew, format, false, signal);
+		const encoder = await pickImportEncoder();
+		const added = await probe(sourcePath, signal);
+		// Progress is weighted by how much work each phase does: a stream copy of the
+		// base is cheap, the mix pass runs over the whole combined length.
+		const weights = {
+			base: copyVideo ? base.duration * 0.15 : base.duration,
+			clip: added.duration,
+			mix: (base.duration + added.duration) * 0.25,
+		};
+		const total = weights.base + weights.clip + weights.mix || 1;
+		const done = { base: 0, clip: 0 };
+		const report = (phase: RecordingImportProgress["phase"], seconds: number) => {
+			const reached =
+				phase === "base"
+					? Math.min(
+							weights.base,
+							(seconds / Math.max(base.duration, 0.001)) * weights.base,
+						)
+					: phase === "clip"
+						? weights.base + Math.min(weights.clip, seconds)
+						: weights.base +
+							weights.clip +
+							Math.min(
+								weights.mix,
+								(seconds / Math.max(base.duration + added.duration, 0.001)) *
+									weights.mix,
+							);
+			if (phase === "base") done.base = reached;
+			if (phase === "clip") done.clip = reached;
+			onProgress?.({ percent: Math.max(0, Math.min(99, (reached / total) * 100)), phase });
+		};
+		report("base", 0);
+		await normalize(current, normalizedBase, format, copyVideo, signal, encoder, (seconds) =>
+			report("base", seconds),
+		);
+		report("clip", 0);
+		await normalize(sourcePath, normalizedNew, format, false, signal, encoder, (seconds) =>
+			report("clip", seconds),
+		);
+		report("mix", 0);
 		const baseMeta = await probe(normalizedBase, signal);
 		const newMeta = await probe(normalizedNew, signal);
 		await fs.writeFile(path.join(work, "list.txt"), "file 'base.mkv'\nfile 'new.mkv'\n");
@@ -192,6 +305,7 @@ export async function importRecording(
 				`${stem}.mic.wav`,
 			],
 			signal,
+			(seconds) => report("mix", seconds),
 		);
 		const sourceStartMs = Math.round(baseMeta.duration * 1000);
 		const samples = [];
