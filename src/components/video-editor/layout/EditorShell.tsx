@@ -374,6 +374,9 @@ export function EditorShell(props: Props) {
 					<EditorPreviewPanel
 						t={t}
 						videoPath={project.videoPath}
+						videoSourcePath={project.videoSourcePath}
+						sourceDurationMs={ui.duration * 1000}
+						clipCommands={clipCommands}
 						previewVersion={ui.previewVersion}
 						aspectRatio={ui.aspectRatio}
 						setAspectRatio={ui.setAspectRatio}

@@ -200,5 +200,20 @@
 		"expand": "Zeitleiste erweitern",
 		"collapse": "Zeitleiste reduzieren"
 	},
+	"silence": {
+		"button": "Pausen entfernen",
+		"title": "Pausen entfernen",
+		"description": "Schneidet die stillen Lücken aus der Zeitleiste. Rückgängig bringt sie zurück.",
+		"minPause": "Minimale Pause",
+		"padding": "Rand um die Sprache",
+		"sensitivity": "Stille-Schwelle",
+		"analyzing": "Audio wird analysiert…",
+		"found": "{{count}} Pausen · spart {{seconds}} s",
+		"none": "Keine so langen Pausen gefunden.",
+		"apply": "{{count}} Pausen entfernen",
+		"applied": "{{count}} Pausen entfernt ({{seconds}} s)",
+		"failed": "Audio konnte nicht analysiert werden",
+		"noSource": "Kein Quellvideo geladen"
+	},
 	"openRecordingsFolder": "Aufnahmeordner öffnen"
 }

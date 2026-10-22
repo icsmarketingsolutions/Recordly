@@ -208,7 +208,14 @@ export async function extractCaptionAudioSource(options: {
 export async function detectSilenceIntervals(options: {
 	ffmpegPath: string;
 	wavPath: string;
+	noiseDb?: number;
+	minSilenceS?: number;
 }): Promise<SilenceInterval[]> {
+	const noiseDb = Number.isFinite(options.noiseDb) ? (options.noiseDb as number) : SILENCE_NOISE_DB;
+	const minSilenceS =
+		Number.isFinite(options.minSilenceS) && (options.minSilenceS as number) > 0
+			? (options.minSilenceS as number)
+			: SILENCE_DETECT_MIN_S;
 	// ffmpeg writes silencedetect results to stderr; the null muxer just runs the filter.
 	const { stderr } = await execFileAsync(
 		options.ffmpegPath,
@@ -218,7 +225,7 @@ export async function detectSilenceIntervals(options: {
 			"-i",
 			options.wavPath,
 			"-af",
-			`silencedetect=noise=${SILENCE_NOISE_DB}dB:d=${SILENCE_DETECT_MIN_S}`,
+			`silencedetect=noise=${noiseDb}dB:d=${minSilenceS}`,
 			"-f",
 			"null",
 			"-",
@@ -227,6 +234,54 @@ export async function detectSilenceIntervals(options: {
 	);
 
 	return parseSilenceIntervals(stderr ?? "");
+}
+
+export interface RecordingSilence {
+	startMs: number;
+	/** `null` for a trailing silence that runs to the end of the audio. */
+	endMs: number | null;
+}
+
+/**
+ * Detect pauses in the recording's speech audio (the same source captions use:
+ * mic sidecar first, then the recording itself). Used by "Remove pauses".
+ */
+export async function detectRecordingSilences(options: {
+	videoPath: string;
+	noiseDb?: number;
+	minSilenceS?: number;
+}): Promise<{ silences: RecordingSilence[]; audioSourceLabel: string }> {
+	const ffmpegPath = getFfmpegBinaryPath();
+	const normalizedVideoPath = normalizeVideoSourcePath(options.videoPath);
+	if (!normalizedVideoPath) {
+		throw new Error("Missing source video path.");
+	}
+	const wavPath = path.join(
+		app.getPath("temp"),
+		`recordly-silence-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.wav`,
+	);
+	try {
+		const audioSource = await extractCaptionAudioSource({
+			videoPath: normalizedVideoPath,
+			ffmpegPath,
+			wavPath,
+		});
+		const intervals = await detectSilenceIntervals({
+			ffmpegPath,
+			wavPath,
+			noiseDb: options.noiseDb,
+			minSilenceS: options.minSilenceS,
+		});
+		return {
+			audioSourceLabel: audioSource.label,
+			silences: intervals.map((interval) => ({
+				startMs: interval.startMs,
+				endMs: Number.isFinite(interval.endMs) ? interval.endMs : null,
+			})),
+		};
+	} finally {
+		await fs.rm(wavPath, { force: true }).catch(() => undefined);
+	}
 }
 
 async function generateCaptionsForSource(options: {

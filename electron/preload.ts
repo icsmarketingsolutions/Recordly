@@ -802,6 +802,13 @@ contextBridge.exposeInMainWorld("electronAPI", {
 		ipcRenderer.on("whisper-small-model-download-progress", listener);
 		return () => ipcRenderer.removeListener("whisper-small-model-download-progress", listener);
 	},
+	detectRecordingSilences: (options: {
+		videoPath: string;
+		noiseDb?: number;
+		minSilenceS?: number;
+	}) => {
+		return ipcRenderer.invoke("detect-recording-silences", options);
+	},
 	generateAutoCaptions: (options: {
 		videoPath: string;
 		whisperExecutablePath?: string;

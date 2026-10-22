@@ -10,6 +10,7 @@ import {
 } from "../clipSequence";
 import { getClipSourceStartMs, type AnnotationRegion, type AudioRegion } from "../types";
 import { planClipSplit } from "../clipSplit";
+import { planSilenceRemoval, type SourceSilence } from "../silenceRemoval";
 import type { ClipRegion, EditorEffectSection, ZoomRegion } from "../types";
 import { supportsPreviewPlaybackRate } from "../videoPlayback/playbackRate";
 
@@ -186,6 +187,31 @@ export function useClipRegionCommands({
 		[selectedClipId, setClipRegions],
 	);
 
+	const handleRemoveSilences = useCallback(
+		(silences: SourceSilence[], options: { minSilenceMs: number; padMs: number }) => {
+			const plan = planSilenceRemoval(clipRegions, silences, {
+				...options,
+				sourceDurationMs,
+				createId: () => `clip-${nextClipIdRef.current++}`,
+			});
+			if (plan.removedCount === 0) return plan;
+			setClipRegions(plan.after);
+			setZoomRegions((current) => rippleRegions(current, plan.split, plan.after));
+			setAnnotationRegions((current) => rippleRegions(current, plan.split, plan.after));
+			setAudioRegions((current) => rippleRegionAnchors(current, plan.split, plan.after));
+			return plan;
+		},
+		[
+			clipRegions,
+			sourceDurationMs,
+			nextClipIdRef,
+			setClipRegions,
+			setZoomRegions,
+			setAnnotationRegions,
+			setAudioRegions,
+		],
+	);
+
 	const handleClipDelete = useCallback(
 		(id: string) => {
 			applySequence(clipRegions.filter((clip) => clip.id !== id));
@@ -202,5 +228,6 @@ export function useClipRegionCommands({
 		handleClipMutedChange,
 		handleClipShowSourceAudioChange,
 		handleClipDelete,
+		handleRemoveSilences,
 	};
 }

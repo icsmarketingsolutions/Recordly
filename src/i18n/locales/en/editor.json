@@ -201,5 +201,20 @@
 		"expand": "Expand Timeline",
 		"collapse": "Collapse Timeline"
 	},
+	"silence": {
+		"button": "Remove pauses",
+		"title": "Remove pauses",
+		"description": "Cuts the silent gaps out of the timeline. Undo brings them back.",
+		"minPause": "Minimum pause",
+		"padding": "Keep around speech",
+		"sensitivity": "Silence threshold",
+		"analyzing": "Analyzing audio…",
+		"found": "{{count}} pauses · saves {{seconds}} s",
+		"none": "No pauses that long were found.",
+		"apply": "Remove {{count}} pauses",
+		"applied": "Removed {{count}} pauses ({{seconds}} s)",
+		"failed": "Could not analyze the audio",
+		"noSource": "No source video is loaded"
+	},
 	"openRecordingsFolder": "Open recordings folder"
 }

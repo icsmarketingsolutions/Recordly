@@ -201,5 +201,20 @@
 		"expand": "展開時間軸",
 		"collapse": "摺疊時間軸"
 	},
+	"silence": {
+		"button": "刪除停頓",
+		"title": "刪除停頓",
+		"description": "從時間軸中剪掉靜音片段。復原可還原。",
+		"minPause": "最短停頓",
+		"padding": "語音前後保留",
+		"sensitivity": "靜音門檻",
+		"analyzing": "正在分析音訊…",
+		"found": "{{count}} 處停頓 · 節省 {{seconds}} 秒",
+		"none": "沒有找到這麼長的停頓。",
+		"apply": "刪除 {{count}} 處停頓",
+		"applied": "已刪除 {{count}} 處停頓（{{seconds}} 秒）",
+		"failed": "無法分析音訊",
+		"noSource": "未載入來源影片"
+	},
 	"openRecordingsFolder": "打開錄製資料夾"
 }

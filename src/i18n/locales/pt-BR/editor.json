@@ -201,5 +201,20 @@
 		"expand": "Expandir linha do tempo",
 		"collapse": "Recolher linha do tempo"
 	},
+	"silence": {
+		"button": "Remover pausas",
+		"title": "Remover pausas",
+		"description": "Corta os silêncios da linha do tempo. Desfazer os traz de volta.",
+		"minPause": "Pausa mínima",
+		"padding": "Margem ao redor da fala",
+		"sensitivity": "Limite de silêncio",
+		"analyzing": "Analisando o áudio…",
+		"found": "{{count}} pausas · economiza {{seconds}} s",
+		"none": "Nenhuma pausa tão longa foi encontrada.",
+		"apply": "Remover {{count}} pausas",
+		"applied": "{{count}} pausas removidas ({{seconds}} s)",
+		"failed": "Não foi possível analisar o áudio",
+		"noSource": "Nenhum vídeo de origem carregado"
+	},
 	"openRecordingsFolder": "Abrir pasta de gravações"
 }

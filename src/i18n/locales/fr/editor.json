@@ -201,5 +201,20 @@
 		"expand": "Développer la timeline",
 		"collapse": "Réduire la timeline"
 	},
+	"silence": {
+		"button": "Supprimer les pauses",
+		"title": "Supprimer les pauses",
+		"description": "Coupe les silences de la timeline. Annuler les rétablit.",
+		"minPause": "Pause minimale",
+		"padding": "Marge autour de la voix",
+		"sensitivity": "Seuil de silence",
+		"analyzing": "Analyse de l’audio…",
+		"found": "{{count}} pauses · gagne {{seconds}} s",
+		"none": "Aucune pause aussi longue trouvée.",
+		"apply": "Supprimer {{count}} pauses",
+		"applied": "{{count}} pauses supprimées ({{seconds}} s)",
+		"failed": "Impossible d’analyser l’audio",
+		"noSource": "Aucune vidéo source chargée"
+	},
 	"openRecordingsFolder": "Ouvrir le dossier des enregistrements"
 }

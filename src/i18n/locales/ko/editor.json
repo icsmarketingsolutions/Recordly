@@ -202,5 +202,20 @@
 		"expand": "타임라인 펼치기",
 		"collapse": "타임라인 접기"
 	},
+	"silence": {
+		"button": "일시 정지 제거",
+		"title": "일시 정지 제거",
+		"description": "타임라인에서 무음 구간을 잘라냅니다. 실행 취소로 되돌릴 수 있습니다.",
+		"minPause": "최소 정지 길이",
+		"padding": "음성 주변 여유",
+		"sensitivity": "무음 임계값",
+		"analyzing": "오디오 분석 중…",
+		"found": "정지 {{count}}개 · {{seconds}}초 절약",
+		"none": "그만큼 긴 정지 구간이 없습니다.",
+		"apply": "정지 {{count}}개 제거",
+		"applied": "정지 {{count}}개 제거됨 ({{seconds}}초)",
+		"failed": "오디오를 분석할 수 없습니다",
+		"noSource": "불러온 원본 영상이 없습니다"
+	},
 	"openRecordingsFolder": "녹화 폴더 열기"
 }

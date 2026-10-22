@@ -202,5 +202,20 @@
 		"expand": "Tijdlijn uitvouwen",
 		"collapse": "Tijdlijn samenvouwen"
 	},
+	"silence": {
+		"button": "Pauzes verwijderen",
+		"title": "Pauzes verwijderen",
+		"description": "Knipt de stille stukken uit de tijdlijn. Ongedaan maken brengt ze terug.",
+		"minPause": "Minimale pauze",
+		"padding": "Marge rond spraak",
+		"sensitivity": "Stiltedrempel",
+		"analyzing": "Audio analyseren…",
+		"found": "{{count}} pauzes · bespaart {{seconds}} s",
+		"none": "Geen pauzes van die lengte gevonden.",
+		"apply": "{{count}} pauzes verwijderen",
+		"applied": "{{count}} pauzes verwijderd ({{seconds}} s)",
+		"failed": "Audio kon niet worden geanalyseerd",
+		"noSource": "Geen bronvideo geladen"
+	},
 	"openRecordingsFolder": "Opnamemap openen"
 }

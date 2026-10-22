@@ -30,6 +30,7 @@ import { ASPECT_RATIOS, type AspectRatio, getAspectRatioLabel } from "@/utils/as
 import type { useVideoEditorAudio } from "../audio/useVideoEditorAudio";
 import type { CaptionEditTarget } from "../captionEditing";
 import type { useAnnotationRegionCommands } from "../hooks/useAnnotationRegionCommands";
+import type { useClipRegionCommands } from "../hooks/useClipRegionCommands";
 import type { useEditorPlaybackControls } from "../hooks/useEditorPlaybackControls";
 import type { useTimelineProjection } from "../hooks/useTimelineProjection";
 import type { useZoomRegionCommands } from "../hooks/useZoomRegionCommands";
@@ -38,10 +39,14 @@ import type { useTimelineState } from "../state/useTimelineState";
 import type { TimelineEditorHandle } from "../timeline/TimelineEditor";
 import type { VideoPlaybackRef } from "../VideoPlayback";
 import { EditorVideoPreview } from "./EditorVideoPreview";
+import { RemoveSilencesPopover } from "./RemoveSilencesPopover";
 
 type Props = {
 	t: ReturnType<typeof useI18n>["t"];
 	videoPath: string | null;
+	videoSourcePath: string | null;
+	sourceDurationMs: number;
+	clipCommands: ReturnType<typeof useClipRegionCommands>;
 	previewVersion: number;
 	aspectRatio: AspectRatio;
 	setAspectRatio: Dispatch<SetStateAction<AspectRatio>>;
@@ -85,6 +90,9 @@ export function EditorPreviewPanel(props: Props) {
 	const {
 		t,
 		videoPath,
+		videoSourcePath,
+		sourceDurationMs,
+		clipCommands,
 		previewVersion,
 		aspectRatio,
 		setAspectRatio,
@@ -298,6 +306,13 @@ export function EditorPreviewPanel(props: Props) {
 					>
 						<Scissors className="h-4 w-4" />
 					</Button>
+					<RemoveSilencesPopover
+						t={t}
+						videoSourcePath={videoSourcePath}
+						clipRegions={timeline.clipRegions}
+						sourceDurationMs={sourceDurationMs}
+						onRemoveSilences={clipCommands.handleRemoveSilences}
+					/>
 				</div>
 
 				<div className="editor-playback-center z-10 flex items-center justify-center">

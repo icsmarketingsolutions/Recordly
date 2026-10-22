@@ -201,5 +201,20 @@
 		"expand": "展开时间轴",
 		"collapse": "折叠时间轴"
 	},
+	"silence": {
+		"button": "删除停顿",
+		"title": "删除停顿",
+		"description": "从时间线中剪掉静音片段。撤销可恢复。",
+		"minPause": "最短停顿",
+		"padding": "语音前后保留",
+		"sensitivity": "静音阈值",
+		"analyzing": "正在分析音频…",
+		"found": "{{count}} 处停顿 · 节省 {{seconds}} 秒",
+		"none": "没有找到这么长的停顿。",
+		"apply": "删除 {{count}} 处停顿",
+		"applied": "已删除 {{count}} 处停顿（{{seconds}} 秒）",
+		"failed": "无法分析音频",
+		"noSource": "未加载源视频"
+	},
 	"openRecordingsFolder": "打开录制文件夹"
 }

@@ -743,6 +743,17 @@ interface Window {
 				error?: string;
 			}) => void,
 		) => () => void;
+		detectRecordingSilences?: (options: {
+			videoPath: string;
+			noiseDb?: number;
+			minSilenceS?: number;
+		}) => Promise<{
+			success: boolean;
+			silences?: Array<{ startMs: number; endMs: number | null }>;
+			audioSourceLabel?: string;
+			message?: string;
+			error?: string;
+		}>;
 		generateAutoCaptions: (options: {
 			videoPath: string;
 			whisperExecutablePath?: string;
