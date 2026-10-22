@@ -193,6 +193,12 @@ contextBridge.exposeInMainWorld("electronAPI", {
 	hudOverlayDrag: (phase: "start" | "move" | "end", screenX: number, screenY: number) => {
 		ipcRenderer.send("hud-overlay-drag", phase, screenX, screenY);
 	},
+	onHudShortcut: (callback: (shortcut: { action: string }) => void) => {
+		const listener = (_event: Electron.IpcRendererEvent, shortcut: { action: string }) =>
+			callback(shortcut);
+		ipcRenderer.on("hud-shortcut", listener);
+		return () => ipcRenderer.removeListener("hud-shortcut", listener);
+	},
 	hudOverlayFollowCursor: () => {
 		ipcRenderer.send("hud-overlay-follow-cursor");
 	},

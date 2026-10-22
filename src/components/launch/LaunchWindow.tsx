@@ -100,6 +100,39 @@ function LaunchWindowContent() {
 	const { hudOverlayMousePassthroughSupported, platform } =
 		useLaunchWindowSystemState(preparePermissions);
 
+	// Global shortcuts (Ctrl/Cmd+Shift+S/P/R/X) arrive from the main process while
+	// recording, even with the HUD hidden; dispatch to the live handlers.
+	const shortcutHandlersRef = useRef({
+		recording,
+		paused,
+		toggleRecording,
+		pauseRecording,
+		resumeRecording,
+		retakeRecording,
+		cancelRecording,
+	});
+	shortcutHandlersRef.current = {
+		recording,
+		paused,
+		toggleRecording,
+		pauseRecording,
+		resumeRecording,
+		retakeRecording,
+		cancelRecording,
+	};
+	useEffect(
+		() =>
+			window.electronAPI?.onHudShortcut?.(({ action }) => {
+				const h = shortcutHandlersRef.current;
+				if (!h.recording) return;
+				if (action === "stop") void h.toggleRecording();
+				else if (action === "pause") (h.paused ? h.resumeRecording : h.pauseRecording)();
+				else if (action === "retake") void h.retakeRecording();
+				else if (action === "cancel") h.cancelRecording();
+			}),
+		[],
+	);
+
 	useEffect(() => {
 		if (!selectedDeviceId) {
 			return;

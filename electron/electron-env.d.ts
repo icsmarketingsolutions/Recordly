@@ -221,6 +221,7 @@ interface Window {
 		hudOverlaySetIgnoreMouse: (ignore: boolean) => void;
 		hudOverlaySetSourceSelectionActive: (active: boolean) => void;
 		hudOverlayDrag: (phase: "start" | "move" | "end", screenX: number, screenY: number) => void;
+		onHudShortcut?: (callback: (shortcut: { action: string }) => void) => () => void;
 		hudOverlayFollowCursor?: () => void;
 		onHudOverlayDisplayChanged?: (
 			callback: (cursor: { cursorX: number; cursorY: number }) => void,

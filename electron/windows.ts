@@ -5,7 +5,8 @@ import fs from "node:fs";
 import { createRequire } from "node:module";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { app, BrowserWindow, ipcMain, type WebContents } from "electron";
+import { app, BrowserWindow, globalShortcut, ipcMain, type WebContents } from "electron";
+import { readAppSetting, writeAppSetting } from "./appSettingsStore";
 import {
 	supportsHudCaptureProtection,
 	shouldProtectHudCapture,
@@ -228,12 +229,51 @@ function getScreen() {
 	return nodeRequire("electron").screen as typeof import("electron").screen;
 }
 
+const HUD_DISPLAY_SETTING = "hudOverlayDisplayId";
+
+/** The display the HUD was last dragged to, when it is still connected. */
+function getRememberedHudDisplay() {
+	const id = readAppSetting(HUD_DISPLAY_SETTING);
+	if (typeof id !== "number") return null;
+	return getScreen().getAllDisplays().find((display) => display.id === id) ?? null;
+}
+
 function getHudOverlayDisplay() {
 	const hudWindow = getHudOverlayWindow();
 	if (hudWindow) {
 		return getScreen().getDisplayMatching(hudWindow.getBounds());
 	}
-	return getScreen().getPrimaryDisplay();
+	return getRememberedHudDisplay() ?? getScreen().getPrimaryDisplay();
+}
+
+// Recording controls reachable from the keyboard even while the HUD is hidden
+// or another app has focus. Registered only while a recording is running.
+const HUD_RECORDING_SHORTCUTS: Array<{ accelerator: string; action: string }> = [
+	{ accelerator: "CommandOrControl+Shift+S", action: "stop" },
+	{ accelerator: "CommandOrControl+Shift+P", action: "pause" },
+	{ accelerator: "CommandOrControl+Shift+R", action: "retake" },
+	{ accelerator: "CommandOrControl+Shift+X", action: "cancel" },
+];
+let hudRecordingShortcutsRegistered = false;
+
+function setHudRecordingShortcuts(active: boolean) {
+	if (active === hudRecordingShortcutsRegistered) return;
+	hudRecordingShortcutsRegistered = active;
+	for (const { accelerator, action } of HUD_RECORDING_SHORTCUTS) {
+		if (!active) {
+			globalShortcut.unregister(accelerator);
+			continue;
+		}
+		try {
+			const ok = globalShortcut.register(accelerator, () => {
+				const hud = getHudOverlayWindow();
+				if (hud && !hud.isDestroyed()) hud.webContents.send("hud-shortcut", { action });
+			});
+			if (!ok) console.warn(`[hud] shortcut ${accelerator} is taken by another app`);
+		} catch (error) {
+			console.warn(`[hud] could not register ${accelerator}:`, error);
+		}
+	}
 }
 
 function getHudOverlayBounds(display = getHudOverlayDisplay()) {
@@ -443,6 +483,11 @@ ipcMain.on("hud-overlay-follow-cursor", (event) => {
 	const target = screen.getDisplayNearestPoint(cursor);
 	if (target.id === getHudOverlayDisplay().id) return;
 	hudOverlayWindow.setBounds(getHudOverlayBounds(target), false);
+	try {
+		writeAppSetting(HUD_DISPLAY_SETTING, target.id);
+	} catch {
+		/* Remembering the monitor is best effort. */
+	}
 	const bounds = hudOverlayWindow.getBounds();
 	if (!event.sender.isDestroyed())
 		event.sender.send("hud-overlay-display-changed", {
@@ -703,6 +748,7 @@ export function createHudOverlayWindow(): BrowserWindow {
 			recordingPreparationActive = false;
 			hudCaptureStarting = false;
 			hudOverlayRecordingActive = false;
+			setHudRecordingShortcuts(false);
 		}
 	});
 
@@ -758,6 +804,7 @@ export function reassertHudOverlayMousePassthrough(): void {
 export function setHudOverlayRecordingActive(recording: boolean): void {
 	hudCaptureStarting = false;
 	hudOverlayRecordingActive = Boolean(recording);
+	setHudRecordingShortcuts(hudOverlayRecordingActive);
 	notifyEditorMode();
 	hudOverlayFallbackExpanded = false;
 	applyHudOverlayBounds();
