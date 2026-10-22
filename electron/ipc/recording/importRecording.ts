@@ -133,7 +133,8 @@ export function canStreamCopyIntoSequence(meta: Probe, format: Format): boolean 
 		meta.pixelFormat === "yuv420p" &&
 		meta.width === format.width &&
 		meta.height === format.height &&
-		Math.abs(meta.fps - format.fps) < 0.01
+		// Recordings are variable-rate (59.5–60 fps); only a different nominal rate matters.
+		Math.abs(meta.fps - format.fps) < 1.5
 	);
 }
 
@@ -309,10 +310,6 @@ export async function importRecording(
 				"0",
 				"-c",
 				"copy",
-				// Pieces may come from different encoders: carry each one's SPS/PPS
-				// in-band so every keyframe decodes with its own parameters.
-				"-bsf:v",
-				"dump_extra=freq=keyframe",
 				combined,
 			],
 			signal,

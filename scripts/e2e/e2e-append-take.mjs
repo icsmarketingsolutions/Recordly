@@ -33,7 +33,14 @@ const hudTarget = (pages) => pages.find((t) => /app\.asar\/dist/.test(t.url));
 const editorTargets = (pages) => pages.filter((t) => /windowType=editor/.test(t.url));
 
 async function recordWithHud(label) {
-	const hud = await connect(hudTarget(await listPages()));
+	// The HUD window is recreated when the editor asks for a take; wait for it.
+	let target = hudTarget(await listPages());
+	for (let i = 0; i < 30 && !target; i++) {
+		await sleep(500);
+		target = hudTarget(await listPages());
+	}
+	if (!target) throw new Error(`[${label}] HUD window not found`);
+	const hud = await connect(target);
 	for (let i = 0; i < 20 && (await hud.evaluate(`document.visibilityState`)) !== "visible"; i++)
 		await sleep(500);
 	if (await hud.evaluate(`document.body.innerText.includes("Pick screen")`)) {

@@ -261,10 +261,18 @@ export async function detectRecordingSilences(options: {
 		`recordly-silence-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.wav`,
 	);
 	try {
+		// Pauses are judged on what the viewer hears: the recording's mixed track
+		// first. The mic sidecar of a multi-clip sequence is silent for imported
+		// files and would mark whole clips as one pause.
+		const candidates = await resolveCaptionAudioCandidates(normalizedVideoPath);
 		const audioSource = await extractCaptionAudioSource({
 			videoPath: normalizedVideoPath,
 			ffmpegPath,
 			wavPath,
+			candidates: [
+				...candidates.filter((candidate) => candidate.label === "recording"),
+				...candidates.filter((candidate) => candidate.label !== "recording"),
+			],
 		});
 		const intervals = await detectSilenceIntervals({
 			ffmpegPath,
