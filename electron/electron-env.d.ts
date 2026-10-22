@@ -723,19 +723,19 @@ interface Window {
 			canceled?: boolean;
 			error?: string;
 		}>;
-		getWhisperSmallModelStatus: () => Promise<{
+		getWhisperSmallModelStatus: (model?: string) => Promise<{
 			success: boolean;
 			exists: boolean;
 			path?: string | null;
 			error?: string;
 		}>;
-		downloadWhisperSmallModel: () => Promise<{
+		downloadWhisperSmallModel: (model?: string) => Promise<{
 			success: boolean;
 			path?: string;
 			alreadyDownloaded?: boolean;
 			error?: string;
 		}>;
-		deleteWhisperSmallModel: () => Promise<{ success: boolean; error?: string }>;
+		deleteWhisperSmallModel: (model?: string) => Promise<{ success: boolean; error?: string }>;
 		onWhisperSmallModelDownloadProgress: (
 			callback: (state: {
 				status: "idle" | "downloading" | "downloaded" | "error";

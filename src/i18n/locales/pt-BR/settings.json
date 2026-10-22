@@ -173,6 +173,12 @@
 		"glossary": "Glossário",
 		"glossaryPlaceholder": "Nomes, marcas e termos, separados por vírgulas",
 		"glossaryHint": "Salvo com o projeto e usado na próxima geração de legendas.",
+		"model": "Modelo",
+		"models": {
+			"small": "Pequeno · rápido (470 MB)",
+			"medium": "Médio · melhor (1,5 GB)",
+			"large-v3-turbo": "Grande v3 turbo · o melhor (1,6 GB)"
+		},
 		"downloading": "Baixando...",
 		"deleteModel": "Excluir modelo",
 		"clearModel": "Limpar modelo",

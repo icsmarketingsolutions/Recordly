@@ -4,9 +4,10 @@ import fs from "node:fs/promises";
 import { get as httpsGet } from "node:https";
 import type Electron from "electron";
 import {
+	getWhisperModelDownloadUrl,
+	getWhisperModelPath,
 	WHISPER_MODEL_DIR,
-	WHISPER_MODEL_DOWNLOAD_URL,
-	WHISPER_SMALL_MODEL_PATH,
+	type WhisperModelId,
 } from "../constants";
 
 export function sendWhisperModelDownloadProgress(
@@ -21,13 +22,14 @@ export function sendWhisperModelDownloadProgress(
 	webContents.send("whisper-small-model-download-progress", payload);
 }
 
-export async function getWhisperSmallModelStatus() {
+export async function getWhisperSmallModelStatus(model: WhisperModelId = "small") {
+	const modelPath = getWhisperModelPath(model);
 	try {
-		await fs.access(WHISPER_SMALL_MODEL_PATH, fsConstants.R_OK);
+		await fs.access(modelPath, fsConstants.R_OK);
 		return {
 			success: true,
 			exists: true,
-			path: WHISPER_SMALL_MODEL_PATH,
+			path: modelPath,
 		};
 	} catch {
 		return {
@@ -112,9 +114,11 @@ export function downloadFileWithProgress(
 
 export async function downloadWhisperSmallModel(
 	webContents: Electron.WebContents,
+	model: WhisperModelId = "small",
 ): Promise<string> {
 	await fs.mkdir(WHISPER_MODEL_DIR, { recursive: true });
-	const tempPath = `${WHISPER_SMALL_MODEL_PATH}.download`;
+	const modelPath = getWhisperModelPath(model);
+	const tempPath = `${modelPath}.download`;
 
 	sendWhisperModelDownloadProgress(webContents, {
 		status: "downloading",
@@ -124,20 +128,20 @@ export async function downloadWhisperSmallModel(
 
 	try {
 		await fs.rm(tempPath, { force: true });
-		await downloadFileWithProgress(WHISPER_MODEL_DOWNLOAD_URL, tempPath, (progress) => {
+		await downloadFileWithProgress(getWhisperModelDownloadUrl(model), tempPath, (progress) => {
 			sendWhisperModelDownloadProgress(webContents, {
 				status: "downloading",
 				progress,
 				path: null,
 			});
 		});
-		await fs.rename(tempPath, WHISPER_SMALL_MODEL_PATH);
+		await fs.rename(tempPath, modelPath);
 		sendWhisperModelDownloadProgress(webContents, {
 			status: "downloaded",
 			progress: 100,
-			path: WHISPER_SMALL_MODEL_PATH,
+			path: modelPath,
 		});
-		return WHISPER_SMALL_MODEL_PATH;
+		return modelPath;
 	} catch (error) {
 		await fs.rm(tempPath, { force: true }).catch(() => undefined);
 		sendWhisperModelDownloadProgress(webContents, {
@@ -150,6 +154,6 @@ export async function downloadWhisperSmallModel(
 	}
 }
 
-export async function deleteWhisperSmallModel(): Promise<void> {
-	await fs.rm(WHISPER_SMALL_MODEL_PATH, { force: true });
+export async function deleteWhisperSmallModel(model: WhisperModelId = "small"): Promise<void> {
+	await fs.rm(getWhisperModelPath(model), { force: true });
 }

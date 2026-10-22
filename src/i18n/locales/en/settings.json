@@ -179,6 +179,12 @@
 		"glossary": "Glossary",
 		"glossaryPlaceholder": "Names, brands and terms, separated by commas",
 		"glossaryHint": "Saved with the project and used the next time captions are generated.",
+		"model": "Model",
+		"models": {
+			"small": "Small · fast (470 MB)",
+			"medium": "Medium · better (1.5 GB)",
+			"large-v3-turbo": "Large v3 turbo · best (1.6 GB)"
+		},
 		"downloading": "Downloading...",
 		"deleteModel": "Delete Model",
 		"clearModel": "Clear Model",

@@ -18,6 +18,22 @@ export const WHISPER_MODEL_DOWNLOAD_URL =
 	"https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-small.bin";
 export const WHISPER_MODEL_DIR = path.join(USER_DATA_PATH, "whisper");
 export const WHISPER_SMALL_MODEL_PATH = path.join(WHISPER_MODEL_DIR, "ggml-small.bin");
+/** Downloadable whisper.cpp models; larger ones hear names and accents better but run slower. */
+export const WHISPER_MODELS = {
+	small: { file: "ggml-small.bin", approxMb: 470 },
+	medium: { file: "ggml-medium.bin", approxMb: 1500 },
+	"large-v3-turbo": { file: "ggml-large-v3-turbo.bin", approxMb: 1600 },
+} as const;
+export type WhisperModelId = keyof typeof WHISPER_MODELS;
+export function isWhisperModelId(value: unknown): value is WhisperModelId {
+	return typeof value === "string" && value in WHISPER_MODELS;
+}
+export function getWhisperModelPath(model: WhisperModelId): string {
+	return path.join(WHISPER_MODEL_DIR, WHISPER_MODELS[model].file);
+}
+export function getWhisperModelDownloadUrl(model: WhisperModelId): string {
+	return `https://huggingface.co/ggerganov/whisper.cpp/resolve/main/${WHISPER_MODELS[model].file}`;
+}
 export const COMPANION_AUDIO_LAYOUTS = [
 	{ platform: "mac" as const, systemSuffix: ".system.m4a", micSuffix: ".mic.m4a" },
 	{ platform: "win" as const, systemSuffix: ".system.wav", micSuffix: ".mic.wav" },

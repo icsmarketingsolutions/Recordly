@@ -173,6 +173,12 @@
 		"glossary": "Glossario",
 		"glossaryPlaceholder": "Nomi, marchi e termini, separati da virgole",
 		"glossaryHint": "Salvato con il progetto e usato alla prossima generazione dei sottotitoli.",
+		"model": "Modello",
+		"models": {
+			"small": "Piccolo · veloce (470 MB)",
+			"medium": "Medio · migliore (1,5 GB)",
+			"large-v3-turbo": "Grande v3 turbo · il migliore (1,6 GB)"
+		},
 		"downloading": "Download in corso...",
 		"deleteModel": "Elimina modello",
 		"clearModel": "Cancella modello",

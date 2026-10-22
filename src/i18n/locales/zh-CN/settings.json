@@ -173,6 +173,12 @@
 		"glossary": "词汇表",
 		"glossaryPlaceholder": "名称、品牌和术语，用逗号分隔",
 		"glossaryHint": "随项目保存，下次生成字幕时使用。",
+		"model": "模型",
+		"models": {
+			"small": "小型 · 快 (470 MB)",
+			"medium": "中型 · 更好 (1.5 GB)",
+			"large-v3-turbo": "大型 v3 turbo · 最佳 (1.6 GB)"
+		},
 		"downloading": "下载中...",
 		"deleteModel": "删除模型",
 		"clearModel": "清除模型",

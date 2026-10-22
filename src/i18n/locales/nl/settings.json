@@ -173,6 +173,12 @@
 		"glossary": "Woordenlijst",
 		"glossaryPlaceholder": "Namen, merken en termen, gescheiden door komma's",
 		"glossaryHint": "Opgeslagen bij het project en gebruikt bij de volgende ondertitelgeneratie.",
+		"model": "Model",
+		"models": {
+			"small": "Klein · snel (470 MB)",
+			"medium": "Middel · beter (1,5 GB)",
+			"large-v3-turbo": "Groot v3 turbo · best (1,6 GB)"
+		},
 		"downloading": "Downloaden...",
 		"deleteModel": "Model verwijderen",
 		"clearModel": "Model wissen",

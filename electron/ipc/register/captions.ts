@@ -7,7 +7,12 @@ import {
 	getWhisperSmallModelStatus,
 	sendWhisperModelDownloadProgress,
 } from "../captions/whisper";
-import { LEGACY_PROJECT_FILE_EXTENSIONS, PROJECT_FILE_EXTENSION } from "../constants";
+import {
+	isWhisperModelId,
+	LEGACY_PROJECT_FILE_EXTENSIONS,
+	PROJECT_FILE_EXTENSION,
+	type WhisperModelId,
+} from "../constants";
 import { hasProjectFileExtension, loadProjectFromPath } from "../project/manager";
 import { setCurrentProjectPath } from "../state";
 import { approveUserPath, getRecordingsDir } from "../utils";
@@ -161,17 +166,19 @@ export function registerCaptionHandlers() {
 		}
 	});
 
-	ipcMain.handle("get-whisper-small-model-status", async () => {
+	const modelOf = (value: unknown): WhisperModelId => (isWhisperModelId(value) ? value : "small");
+
+	ipcMain.handle("get-whisper-small-model-status", async (_, model?: unknown) => {
 		try {
-			return await getWhisperSmallModelStatus();
+			return await getWhisperSmallModelStatus(modelOf(model));
 		} catch (error) {
 			return { success: false, exists: false, path: null, error: String(error) };
 		}
 	});
 
-	ipcMain.handle("download-whisper-small-model", async (event) => {
+	ipcMain.handle("download-whisper-small-model", async (event, model?: unknown) => {
 		try {
-			const existing = await getWhisperSmallModelStatus();
+			const existing = await getWhisperSmallModelStatus(modelOf(model));
 			if (existing.exists) {
 				sendWhisperModelDownloadProgress(event.sender, {
 					status: "downloaded",
@@ -181,7 +188,7 @@ export function registerCaptionHandlers() {
 				return { success: true, path: existing.path, alreadyDownloaded: true };
 			}
 
-			const modelPath = await downloadWhisperSmallModel(event.sender);
+			const modelPath = await downloadWhisperSmallModel(event.sender, modelOf(model));
 			return { success: true, path: modelPath };
 		} catch (error) {
 			console.error("Failed to download Whisper small model:", error);
@@ -189,9 +196,9 @@ export function registerCaptionHandlers() {
 		}
 	});
 
-	ipcMain.handle("delete-whisper-small-model", async (event) => {
+	ipcMain.handle("delete-whisper-small-model", async (event, model?: unknown) => {
 		try {
-			await deleteWhisperSmallModel();
+			await deleteWhisperSmallModel(modelOf(model));
 			sendWhisperModelDownloadProgress(event.sender, {
 				status: "idle",
 				progress: 0,
@@ -201,7 +208,7 @@ export function registerCaptionHandlers() {
 		} catch (error) {
 			console.error("Failed to delete Whisper small model:", error);
 			// Verify whether the file was actually removed despite the error
-			const status = await getWhisperSmallModelStatus();
+			const status = await getWhisperSmallModelStatus(modelOf(model));
 			if (!status.exists) {
 				// File is gone — treat as success
 				sendWhisperModelDownloadProgress(event.sender, {

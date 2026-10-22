@@ -173,6 +173,12 @@
 		"glossary": "Glossar",
 		"glossaryPlaceholder": "Namen, Marken und Begriffe, durch Kommas getrennt",
 		"glossaryHint": "Wird mit dem Projekt gespeichert und bei der nächsten Untertitelerzeugung verwendet.",
+		"model": "Modell",
+		"models": {
+			"small": "Klein · schnell (470 MB)",
+			"medium": "Mittel · besser (1,5 GB)",
+			"large-v3-turbo": "Groß v3 turbo · am besten (1,6 GB)"
+		},
 		"downloading": "Wird heruntergeladen...",
 		"deleteModel": "Modell löschen",
 		"clearModel": "Modell entfernen",

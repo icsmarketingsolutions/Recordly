@@ -1,4 +1,4 @@
-import { type Dispatch, type SetStateAction, useCallback, useEffect, useRef } from "react";
+import { type Dispatch, type SetStateAction, useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "@/components/ui/toast";
 import { resolveAutoCaptionSourcePath } from "../autoCaptionSource";
 import { type CaptionEditTarget, updateCaptionCuesForEditedTarget } from "../captionEditing";
@@ -39,6 +39,21 @@ interface UseAutoCaptionControllerParams {
 	syncActiveVideoSource: (sourcePath: string, webcamPath?: string | null) => Promise<void>;
 }
 
+export const WHISPER_MODEL_OPTIONS = ["small", "medium", "large-v3-turbo"] as const;
+export type WhisperModelOption = (typeof WHISPER_MODEL_OPTIONS)[number];
+const WHISPER_MODEL_STORAGE_KEY = "recordly.captions.whisperModel";
+
+function readStoredWhisperModel(): WhisperModelOption {
+	try {
+		const stored = window.localStorage.getItem(WHISPER_MODEL_STORAGE_KEY);
+		return (WHISPER_MODEL_OPTIONS as readonly string[]).includes(stored ?? "")
+			? (stored as WhisperModelOption)
+			: "small";
+	} catch {
+		return "small";
+	}
+}
+
 export function useAutoCaptionController({
 	t,
 	videoPath,
@@ -66,6 +81,17 @@ export function useAutoCaptionController({
 	const captionGenerationInFlightRef = useRef(false);
 	const activeSourceRef = useRef({ videoSourcePath, videoPath });
 	activeSourceRef.current = { videoSourcePath, videoPath };
+	const [whisperModel, setWhisperModel] = useState<WhisperModelOption>(readStoredWhisperModel);
+	const whisperModelChangedRef = useRef(false);
+	const handleWhisperModelChange = useCallback((model: WhisperModelOption) => {
+		whisperModelChangedRef.current = true;
+		try {
+			window.localStorage.setItem(WHISPER_MODEL_STORAGE_KEY, model);
+		} catch {
+			/* Preference only. */
+		}
+		setWhisperModel(model);
+	}, []);
 
 	useEffect(() => {
 		const unsubscribe = window.electronAPI.onWhisperSmallModelDownloadProgress((state) => {
@@ -81,15 +107,19 @@ export function useAutoCaptionController({
 			}
 		});
 
-		void window.electronAPI.getWhisperSmallModelStatus().then((result) => {
+		// Switching models in the panel points generation at that model's file (or
+		// at nothing until it is downloaded); the first query keeps a custom path.
+		const switched = whisperModelChangedRef.current;
+		void window.electronAPI.getWhisperSmallModelStatus(whisperModel).then((result) => {
 			if (!result.success) return;
 			if (result.exists && result.path) {
 				setDownloadedWhisperModelPath(result.path);
-				setWhisperModelPath((current) => current ?? result.path ?? null);
+				setWhisperModelPath((current) => (switched ? result.path! : (current ?? result.path!)));
 				setWhisperModelDownloadStatus("downloaded");
 				setWhisperModelDownloadProgress(100);
 			} else {
 				setDownloadedWhisperModelPath(null);
+				if (switched) setWhisperModelPath(null);
 				setWhisperModelDownloadStatus("idle");
 				setWhisperModelDownloadProgress(0);
 			}
@@ -97,6 +127,7 @@ export function useAutoCaptionController({
 
 		return () => unsubscribe?.();
 	}, [
+		whisperModel,
 		setDownloadedWhisperModelPath,
 		setWhisperModelDownloadProgress,
 		setWhisperModelDownloadStatus,
@@ -114,7 +145,7 @@ export function useAutoCaptionController({
 		if (whisperModelDownloadStatus === "downloading") return;
 		setWhisperModelDownloadStatus("downloading");
 		setWhisperModelDownloadProgress(0);
-		const result = await window.electronAPI.downloadWhisperSmallModel();
+		const result = await window.electronAPI.downloadWhisperSmallModel(whisperModel);
 		if (!result.success) {
 			setWhisperModelDownloadStatus("error");
 			toast.error(result.error || "Failed to download Whisper small model");
@@ -125,6 +156,7 @@ export function useAutoCaptionController({
 			setWhisperModelPath(result.path);
 		}
 	}, [
+		whisperModel,
 		setDownloadedWhisperModelPath,
 		setWhisperModelDownloadProgress,
 		setWhisperModelDownloadStatus,
@@ -140,7 +172,7 @@ export function useAutoCaptionController({
 	}, [setWhisperModelPath]);
 
 	const handleDeleteWhisperSmallModel = useCallback(async () => {
-		const result = await window.electronAPI.deleteWhisperSmallModel();
+		const result = await window.electronAPI.deleteWhisperSmallModel(whisperModel);
 		if (!result.success) {
 			toast.error(result.error || "Failed to delete Whisper small model");
 			return;
@@ -151,6 +183,7 @@ export function useAutoCaptionController({
 		setWhisperModelDownloadProgress(0);
 		toast.success("Whisper small model deleted");
 	}, [
+		whisperModel,
 		downloadedWhisperModelPath,
 		setDownloadedWhisperModelPath,
 		setWhisperModelDownloadProgress,
@@ -284,6 +317,8 @@ export function useAutoCaptionController({
 	return {
 		handlePickWhisperExecutable,
 		handleDownloadWhisperSmallModel,
+		whisperModel,
+		handleWhisperModelChange,
 		handlePickWhisperModel,
 		handleDeleteWhisperSmallModel,
 		handleGenerateAutoCaptions,

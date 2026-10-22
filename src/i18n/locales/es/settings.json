@@ -173,6 +173,12 @@
 		"glossary": "Glosario",
 		"glossaryPlaceholder": "Nombres, marcas y términos, separados por comas",
 		"glossaryHint": "Se guarda con el proyecto y se usa la próxima vez que generes subtítulos.",
+		"model": "Modelo",
+		"models": {
+			"small": "Pequeño · rápido (470 MB)",
+			"medium": "Mediano · mejor (1,5 GB)",
+			"large-v3-turbo": "Grande v3 turbo · el mejor (1,6 GB)"
+		},
 		"downloading": "Descargando...",
 		"deleteModel": "Eliminar modelo",
 		"clearModel": "Borrar modelo",

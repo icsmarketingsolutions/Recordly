@@ -6,6 +6,10 @@ import { Card, RadioGroup, Radio, Label, Description } from "@heroui/react";
 import { ProgressBar } from "@heroui/react";
 import { ColorControl, ColorPalette } from "@/components/ui/color-picker";
 import { Palette, Trash as Trash2, UploadSimple as Upload, VideoCamera } from "@/components/ui/icons";
+import {
+	WHISPER_MODEL_OPTIONS,
+	type WhisperModelOption,
+} from "./captions/useAutoCaptionController";
 import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "@/components/ui/toast";
@@ -558,6 +562,8 @@ interface SettingsPanelProps {
 	onClearAutoCaptions?: () => void;
 	onDownloadWhisperSmallModel?: () => void;
 	onDeleteWhisperSmallModel?: () => void;
+	whisperModel?: WhisperModelOption;
+	onWhisperModelChange?: (model: WhisperModelOption) => void;
 	captionCurrentTimeMs?: number;
 	selectedCaptionId?: string | null;
 	onBeginCaptionEdit?: (id: string) => void;
@@ -1006,6 +1012,8 @@ export function SettingsPanel({
 	onClearAutoCaptions,
 	onDownloadWhisperSmallModel,
 	onDeleteWhisperSmallModel,
+	whisperModel,
+	onWhisperModelChange,
 	captionCurrentTimeMs = 0,
 	selectedCaptionId = null,
 	onBeginCaptionEdit,
@@ -2176,6 +2184,28 @@ export function SettingsPanel({
 						</SelectContent>
 					</Select>
 				</div>
+				{onWhisperModelChange ? (
+					<div className="flex items-center justify-between gap-3">
+						<div className="text-sm font-medium text-foreground">
+							{tSettings("captions.model", "Model")}
+						</div>
+						<Select
+							value={whisperModel ?? "small"}
+							onValueChange={(value) => onWhisperModelChange(value as WhisperModelOption)}
+						>
+							<SelectTrigger className="h-9 w-[180px] text-sm">
+								<SelectValue />
+							</SelectTrigger>
+							<SelectContent>
+								{WHISPER_MODEL_OPTIONS.map((option) => (
+									<SelectItem key={option} value={option}>
+										{tSettings(`captions.models.${option}`)}
+									</SelectItem>
+								))}
+							</SelectContent>
+						</Select>
+					</div>
+				) : null}
 				<div className="flex flex-wrap items-center gap-2">
 					<div className="grid w-full grid-cols-1 gap-2">
 						{whisperModelDownloadStatus === "downloading" ? (
