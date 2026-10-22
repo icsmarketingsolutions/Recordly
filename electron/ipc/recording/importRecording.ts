@@ -13,7 +13,8 @@ import { getUsableCompanionAudioCandidates } from "./diagnostics";
 import { normalizeCursorTelemetrySamples, writeCursorTelemetry } from "../cursor/telemetry";
 import { listRecordings } from "./library";
 import { isApprovedExternalImport } from "./clipSources";
-import { resolveNativeVideoEncoder } from "../export/native-video";
+import { getAvailableNativeVideoEncoders } from "../export/native-video";
+import { getPreferredNativeVideoEncoders } from "../nativeVideoExport";
 import type {
 	RecordingImportResult,
 	RecordingWebcamSource,
@@ -91,13 +92,20 @@ function importEncoderArgs(encoder: string): string[] {
 }
 
 // A GPU encoder (NVENC/QSV/AMF/VideoToolbox) turns a multi-minute re-encode into
-// seconds; libx264 remains the fallback when none works.
-async function pickImportEncoder() {
+// seconds. The export's tiny probe rejects NVENC (it refuses 64x64 frames), so the
+// importer tries the real job with each available encoder in order and falls back
+// to libx264 when one fails to open.
+async function pickImportEncoders(): Promise<string[]> {
+	let available = new Set<string>();
 	try {
-		return await resolveNativeVideoEncoder(getFfmpegBinaryPath(), "balanced");
+		available = await getAvailableNativeVideoEncoders(getFfmpegBinaryPath());
 	} catch {
-		return "libx264";
+		// ffmpeg -encoders failed; only the software encoder is safe to assume.
 	}
+	const preferred = getPreferredNativeVideoEncoders(process.platform).filter((name) =>
+		available.has(name),
+	);
+	return [...new Set([...preferred, "libx264"])];
 }
 async function probe(file: string, signal?: AbortSignal) {
 	const meta = await probeNativeVideoMetadata(getFfmpegBinaryPath(), file, signal);
@@ -118,10 +126,11 @@ async function normalize(
 	format: Format,
 	copyVideo: boolean,
 	signal?: AbortSignal,
-	encoder = "libx264",
+	encoders: string[] = ["libx264"],
 	onTime?: (seconds: number) => void,
 ) {
 	const meta = await probe(file, signal);
+	const encoder = encoders[0] ?? "libx264";
 	const candidates = await getUsableCompanionAudioCandidates(file);
 	const companion = candidates[0];
 	const system = companion?.usablePaths.includes(companion.systemPath)
@@ -177,7 +186,13 @@ async function normalize(
 	);
 	if (!copyVideo) args.push(...importEncoderArgs(encoder));
 	args.push("-c:a", "pcm_s16le", "-t", String(meta.duration), out);
-	await ffmpeg(args, signal, onTime);
+	try {
+		await ffmpeg(args, signal, onTime);
+	} catch (error) {
+		if (copyVideo || encoders.length <= 1 || signal?.aborted) throw error;
+		console.warn(`[import-recording] ${encoder} failed, trying ${encoders[1]}:`, error);
+		await normalize(file, out, format, copyVideo, signal, encoders.slice(1), onTime);
+	}
 }
 
 /** The editor and export share one immutable source, with stable offsets across imports. */
@@ -214,7 +229,8 @@ export async function importRecording(
 		const normalizedNew = path.join(work, "new.mkv");
 		// Only our own normalized source format may be copied across appends.
 		const copyVideo = isLibrarySequenceSource(current);
-		const encoder = await pickImportEncoder();
+		const encoders = await pickImportEncoders();
+		console.log(`[import-recording] encoder candidates: ${encoders.join(", ")}`);
 		const added = await probe(sourcePath, signal);
 		// Progress is weighted by how much work each phase does: a stream copy of the
 		// base is cheap, the mix pass runs over the whole combined length.
@@ -246,11 +262,11 @@ export async function importRecording(
 			onProgress?.({ percent: Math.max(0, Math.min(99, (reached / total) * 100)), phase });
 		};
 		report("base", 0);
-		await normalize(current, normalizedBase, format, copyVideo, signal, encoder, (seconds) =>
+		await normalize(current, normalizedBase, format, copyVideo, signal, encoders, (seconds) =>
 			report("base", seconds),
 		);
 		report("clip", 0);
-		await normalize(sourcePath, normalizedNew, format, false, signal, encoder, (seconds) =>
+		await normalize(sourcePath, normalizedNew, format, false, signal, encoders, (seconds) =>
 			report("clip", seconds),
 		);
 		report("mix", 0);

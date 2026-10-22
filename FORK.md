@@ -14,8 +14,9 @@ nuestros cambios encima. `rapid-captions` y `camera-fx` son las ramas histórica
 - **Varios editores a la vez**: relanzar Recordly (o clic en la bandeja) con un editor
   abierto muestra la HUD; cada grabación terminada abre su propio editor y los demás
   siguen abiertos. El estado por ventana vive en `EditorContext` (`electron/ipc/state.ts`).
-- La barra de la HUD se puede arrastrar a **cualquier monitor** (la ventana transparente
-  cubre la unión de todas las pantallas).
+- La barra de la HUD se puede arrastrar a **cualquier monitor**: la ventana transparente
+  cubre una sola pantalla y, al salir el puntero de ella durante el arrastre, el main la
+  muda a la pantalla del cursor (`hud-overlay-follow-cursor`) y el arrastre se re-basa.
 - Timeline con **alto ajustable** (barra de arrastre, doble clic restablece) y pistas a
   1×/1.5×/2× (botones −/+); se recuerda por máquina en `localStorage`.
 - Exportación: WebGPU por defecto en Windows/macOS (82 vs 47 fps medidos) y aviso cuando
@@ -25,7 +26,8 @@ nuestros cambios encima. `rapid-captions` y `camera-fx` son las ramas histórica
   anexa al final cuando la grabación termina, sin reemplazar el proyecto;
   `clipSources.ts` + evento `append-take-ready`) y **Add file** (cualquier mp4/mov/webm/
   mkv del disco, aprobado por diálogo). El anexado reusa el importador del upstream:
-  reencoda y concatena en `.recordly-media/<uuid>.mp4` (un solo archivo fuente, clips
+  reencoda (con NVENC/QSV/AMF/MF si están, libx264 si no; barra de progreso por fases)
+  y concatena en `.recordly-media/<uuid>.mp4` (un solo archivo fuente, clips
   con `sourceMinMs/sourceMaxMs`); subtítulos del clip nuevo hay que regenerarlos.
 - **Sin cuenta obligatoria**: grabar y guardar nunca piden iniciar sesión; el onboarding
   del upstream solo se abre a pedido y siempre se puede cerrar.
