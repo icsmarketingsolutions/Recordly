@@ -122,5 +122,7 @@ export function planSilenceRemoval(
 		if (sourceEnd > cursor) pushPiece({ startMs: cursor, endMs: sourceEnd }, true);
 	}
 
+	// Never empty the timeline: a recording that is all silence is left alone.
+	if (kept.length === 0) return { split: sorted, after: sorted, removedCount: 0, removedMs: 0 };
 	return { split, after: packClipSequence(kept), removedCount, removedMs };
 }

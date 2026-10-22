@@ -72,6 +72,16 @@ describe("planSilenceRemoval", () => {
 		expect(zooms).toEqual([{ id: "zoom-1", startMs: 2100, endMs: 3100 }]);
 	});
 
+	it("refuses to remove every piece of footage", () => {
+		const clip: ClipRegion = { id: "clip-1", startMs: 0, endMs: 4000, speed: 1 };
+		const plan = planSilenceRemoval([clip], [{ startMs: 0, endMs: null }], {
+			...baseOptions,
+			createId: createIdFactory(),
+		});
+		expect(plan.removedCount).toBe(0);
+		expect(plan.after).toEqual([clip]);
+	});
+
 	it("leaves clips untouched when nothing qualifies", () => {
 		const clips: ClipRegion[] = [
 			{ id: "clip-1", startMs: 0, endMs: 3000, speed: 1 },
