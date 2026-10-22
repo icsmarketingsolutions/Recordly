@@ -144,6 +144,11 @@
 		"openFailed": "Kan link niet openen."
 	},
 	"keyboardShortcuts": {
+		"recordingTitle": "Tijdens het opnemen (ook met verborgen HUD)",
+		"recordingStop": "Opname stoppen",
+		"recordingPause": "Pauzeren / hervatten",
+		"recordingRetake": "Opnieuw opnemen",
+		"recordingCancel": "Opname annuleren",
 		"trigger": "Sneltoetsen",
 		"title": "Sneltoetsen",
 		"description": "Snelreferentie voor de tijdlijn- en editorbesturing.",
@@ -215,6 +220,10 @@
 		"apply": "{{count}} pauzes verwijderen",
 		"applied": "{{count}} pauzes verwijderd ({{seconds}} s)",
 		"failed": "Audio kon niet worden geanalyseerd",
+		"fillers": "Ook stopwoorden knippen (eh, uhm…)",
+		"fillersExtra": "Meer woorden, gescheiden door komma's",
+		"fillersHint": "Maak eerst ondertitels: stopwoorden komen uit hun woordtijden.",
+		"fillersFound": "{{count}} stopwoorden",
 		"noSource": "Geen bronvideo geladen"
 	},
 	"openRecordingsFolder": "Opnamemap openen"

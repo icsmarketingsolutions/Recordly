@@ -143,6 +143,11 @@
 		"openFailed": "Failed to open link."
 	},
 	"keyboardShortcuts": {
+		"recordingTitle": "While recording (works with the HUD hidden)",
+		"recordingStop": "Stop recording",
+		"recordingPause": "Pause / resume",
+		"recordingRetake": "Retake",
+		"recordingCancel": "Cancel recording",
 		"trigger": "Shortcuts",
 		"title": "Keyboard Shortcuts",
 		"description": "Quick reference for the timeline and editor controls.",
@@ -214,6 +219,10 @@
 		"apply": "Remove {{count}} pauses",
 		"applied": "Removed {{count}} pauses ({{seconds}} s)",
 		"failed": "Could not analyze the audio",
+		"fillers": "Also cut filler words (eh, um…)",
+		"fillersExtra": "More words, separated by commas",
+		"fillersHint": "Generate captions first: filler words come from their word timings.",
+		"fillersFound": "{{count}} filler words",
 		"noSource": "No source video is loaded"
 	},
 	"openRecordingsFolder": "Open recordings folder"

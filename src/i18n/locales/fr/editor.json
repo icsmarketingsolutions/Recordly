@@ -143,6 +143,11 @@
 		"openFailed": "Échec de l’ouverture du lien."
 	},
 	"keyboardShortcuts": {
+		"recordingTitle": "Pendant l’enregistrement (même HUD masqué)",
+		"recordingStop": "Arrêter l’enregistrement",
+		"recordingPause": "Pause / reprise",
+		"recordingRetake": "Refaire la prise",
+		"recordingCancel": "Annuler l’enregistrement",
 		"trigger": "Raccourcis",
 		"title": "Raccourcis clavier",
 		"description": "Référence rapide pour la timeline et les contrôles de l’éditeur.",
@@ -214,6 +219,10 @@
 		"apply": "Supprimer {{count}} pauses",
 		"applied": "{{count}} pauses supprimées ({{seconds}} s)",
 		"failed": "Impossible d’analyser l’audio",
+		"fillers": "Couper aussi les hésitations (euh, hum…)",
+		"fillersExtra": "Autres mots, séparés par des virgules",
+		"fillersHint": "Générez d’abord les sous-titres : les hésitations viennent de leurs temps par mot.",
+		"fillersFound": "{{count}} hésitations",
 		"noSource": "Aucune vidéo source chargée"
 	},
 	"openRecordingsFolder": "Ouvrir le dossier des enregistrements"

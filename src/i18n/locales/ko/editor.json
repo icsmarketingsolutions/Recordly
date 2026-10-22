@@ -144,6 +144,11 @@
 		"openFailed": "링크를 열지 못했습니다."
 	},
 	"keyboardShortcuts": {
+		"recordingTitle": "녹화 중 (HUD가 숨겨져 있어도 동작)",
+		"recordingStop": "녹화 중지",
+		"recordingPause": "일시정지 / 재개",
+		"recordingRetake": "다시 녹화",
+		"recordingCancel": "녹화 취소",
 		"trigger": "단축키",
 		"title": "키보드 단축키",
 		"description": "타임라인과 편집기 컨트롤에 대한 빠른 참고입니다.",
@@ -215,6 +220,10 @@
 		"apply": "정지 {{count}}개 제거",
 		"applied": "정지 {{count}}개 제거됨 ({{seconds}}초)",
 		"failed": "오디오를 분석할 수 없습니다",
+		"fillers": "군말도 잘라내기 (어, 음…)",
+		"fillersExtra": "추가 단어, 쉼표로 구분",
+		"fillersHint": "먼저 자막을 생성하세요. 군말은 단어 타이밍에서 찾습니다.",
+		"fillersFound": "군말 {{count}}개",
 		"noSource": "불러온 원본 영상이 없습니다"
 	},
 	"openRecordingsFolder": "녹화 폴더 열기"

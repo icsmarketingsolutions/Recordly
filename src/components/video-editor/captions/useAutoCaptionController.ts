@@ -191,6 +191,79 @@ export function useAutoCaptionController({
 		setWhisperModelPath,
 	]);
 
+	/**
+	 * A project that already has captions gets them for the takes just appended:
+	 * each take is transcribed on its own (its mic sidecar is still around) and the
+	 * cues are shifted to where the take landed in the shared source.
+	 */
+	const handleAppendedClipsCaptions = useCallback(
+		async (clips: Array<{ path: string; sourceStartMs: number; durationMs: number }>) => {
+			if (!autoCaptions?.length || !whisperModelPath || clips.length === 0) return;
+			if (captionGenerationInFlightRef.current) return;
+			captionGenerationInFlightRef.current = true;
+			setIsGeneratingCaptions(true);
+			const sourceAtStart = activeSourceRef.current.videoSourcePath;
+			try {
+				const added: CaptionCue[] = [];
+				for (const clip of clips) {
+					const result = await window.electronAPI.generateAutoCaptions({
+						videoPath: clip.path,
+						whisperExecutablePath: whisperExecutablePath ?? undefined,
+						whisperModelPath,
+						language: autoCaptionSettings.language,
+						prompt: autoCaptionSettings.glossary,
+					});
+					if (!result.success || !result.cues) continue;
+					const rapid = autoCaptionSettings.segmentationMode === "rapid";
+					const cues = rapid
+						? splitRapidCaptions(result.cues, autoCaptionSettings.wordsPerCaption, true)
+						: result.cues;
+					const limit = clip.durationMs;
+					for (const cue of cues) {
+						if (cue.startMs >= limit) continue;
+						const shift = (ms: number) => clip.sourceStartMs + Math.min(limit, ms);
+						added.push({
+							...cue,
+							id: `${cue.id}-${clip.sourceStartMs}`,
+							startMs: shift(cue.startMs),
+							endMs: shift(cue.endMs),
+							words: cue.words?.map((word) => ({
+								...word,
+								startMs: shift(word.startMs),
+								endMs: shift(word.endMs),
+							})),
+						});
+					}
+				}
+				if (activeSourceRef.current.videoSourcePath !== sourceAtStart) {
+					toast.info("Recording changed; captions for the added clips were not applied.");
+					return;
+				}
+				if (added.length === 0) return;
+				setAutoCaptions((current) =>
+					[...current, ...added].sort((left, right) => left.startMs - right.startMs),
+				);
+				toast.success(`${added.length} captions added for the new clip${clips.length > 1 ? "s" : ""}`);
+			} catch (error) {
+				toast.error(`Could not caption the added clip: ${getErrorMessage(error)}`);
+			} finally {
+				captionGenerationInFlightRef.current = false;
+				setIsGeneratingCaptions(false);
+			}
+		},
+		[
+			autoCaptions?.length,
+			whisperModelPath,
+			whisperExecutablePath,
+			autoCaptionSettings.language,
+			autoCaptionSettings.glossary,
+			autoCaptionSettings.segmentationMode,
+			autoCaptionSettings.wordsPerCaption,
+			setAutoCaptions,
+			setIsGeneratingCaptions,
+		],
+	);
+
 	const handleGenerateAutoCaptions = useCallback(async () => {
 		if (captionGenerationInFlightRef.current || isGeneratingCaptions) return;
 		captionGenerationInFlightRef.current = true;
@@ -322,6 +395,7 @@ export function useAutoCaptionController({
 		handlePickWhisperModel,
 		handleDeleteWhisperSmallModel,
 		handleGenerateAutoCaptions,
+		handleAppendedClipsCaptions,
 		handleSplitRapidCaptions,
 		handleSaveAutoCaptionEdit,
 	};

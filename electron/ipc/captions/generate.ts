@@ -6,6 +6,7 @@ import { promisify } from "node:util";
 import { app } from "electron";
 import { getFfmpegBinaryPath } from "../ffmpeg/binary";
 import { getBundledWhisperExecutableCandidates } from "../paths/binaries";
+import { WHISPER_GPU_EXECUTABLE_CANDIDATES } from "../constants";
 import { resolveRecordingSession } from "../project/session";
 import {
 	getCompanionAudioStartDelayMs,
@@ -68,6 +69,7 @@ export async function isExecutableFile(filePath: string) {
 export async function resolveWhisperExecutablePath(preferredPath?: string | null) {
 	const candidatePaths = [
 		preferredPath?.trim() || null,
+		...WHISPER_GPU_EXECUTABLE_CANDIDATES,
 		...getBundledWhisperExecutableCandidates(),
 		process.env["WHISPER_CPP_PATH"]?.trim() || null,
 		process.platform === "darwin" ? "/opt/homebrew/bin/whisper-cli" : null,
@@ -308,6 +310,7 @@ async function generateCaptionsForSource(options: {
 	}
 
 	const whisperExecutablePath = await resolveWhisperExecutablePath(options.whisperExecutablePath);
+	console.log(`[auto-captions] whisper executable: ${whisperExecutablePath}`);
 	const whisperModelPath = path.resolve(options.whisperModelPath);
 	await ensureReadableFile(whisperExecutablePath, { executable: true });
 	await ensureReadableFile(whisperModelPath);

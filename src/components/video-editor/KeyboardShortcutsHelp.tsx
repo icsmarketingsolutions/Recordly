@@ -76,6 +76,25 @@ export function KeyboardShortcutsHelp() {
 							<Kbd>{t("keyboardShortcuts.tab")}</Kbd>
 						</div>
 					</div>
+
+					<div className="pt-1 border-t border-foreground/5 mt-1">
+						<div className="mb-1 text-[10px] font-semibold text-foreground">
+							{t("keyboardShortcuts.recordingTitle")}
+						</div>
+						{(
+							[
+								["recordingStop", "S"],
+								["recordingPause", "P"],
+								["recordingRetake", "R"],
+								["recordingCancel", "X"],
+							] as const
+						).map(([key, letter]) => (
+							<div key={key} className="flex items-center justify-between mt-1.5">
+								<span className="text-muted-foreground">{t(`keyboardShortcuts.${key}`)}</span>
+								<Kbd>{`${isMac ? "⌘" : "Ctrl"} + Shift + ${letter}`}</Kbd>
+							</div>
+						))}
+					</div>
 				</div>
 			</PopoverContent>
 		</Popover>

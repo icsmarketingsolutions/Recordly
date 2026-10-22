@@ -100,7 +100,13 @@ export function EditorShell(props: Props) {
 		effectiveShowCursor,
 		previewAspectRatioValue,
 	} = props;
-	const library = useRecordingLibrary(project, timeline, ui, appearance);
+	// The caption controller is created below (from projectController); reach it lazily.
+	const appendedCaptionsRef = useRef<
+		((clips: Array<{ path: string; sourceStartMs: number; durationMs: number }>) => Promise<void>) | null
+	>(null);
+	const library = useRecordingLibrary(project, timeline, ui, appearance, {
+		onClipsAppended: (clips) => void appendedCaptionsRef.current?.(clips),
+	});
 	// biome-ignore lint/correctness/useExhaustiveDependencies: Changing the active inspector closes the Videos view.
 	useEffect(() => {
 		library.setOpen(false);
@@ -127,6 +133,7 @@ export function EditorShell(props: Props) {
 		openActions,
 		hasUnsavedChanges,
 	} = projectController;
+	appendedCaptionsRef.current = autoCaption.handleAppendedClipsCaptions;
 	const {
 		cursor,
 		projection,

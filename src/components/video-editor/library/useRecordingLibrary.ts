@@ -19,7 +19,15 @@ export function useRecordingLibrary(
 	timeline: ReturnType<typeof useTimelineState>,
 	ui: ReturnType<typeof useEditorUiState>,
 	appearance: ReturnType<typeof useAppearanceState>,
+	options?: {
+		/** Called once the appended takes are on the timeline (source offsets in ms). */
+		onClipsAppended?: (
+			clips: Array<{ path: string; sourceStartMs: number; durationMs: number }>,
+		) => void;
+	},
 ) {
+	const onClipsAppendedRef = useRef(options?.onClipsAppended);
+	onClipsAppendedRef.current = options?.onClipsAppended;
 	const [open, setOpen] = useState(false);
 	const [entries, setEntries] = useState<RecordingLibraryEntry[]>([]);
 	const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -136,6 +144,7 @@ export function useRecordingLibrary(
 			const addedZooms: ZoomRegion[] = [];
 			let id = "";
 			let completed = 0;
+			const appended: Array<{ path: string; sourceStartMs: number; durationMs: number }> = [];
 			for (const path of [...new Set(typeof paths === "string" ? [paths] : paths)]) {
 				if (cancelled.current) break;
 				const result = await window.electronAPI.importRecording(sourcePath, path, webcam);
@@ -150,6 +159,7 @@ export function useRecordingLibrary(
 					);
 				media = result.value;
 				sourcePath = media.path;
+				appended.push({ path, sourceStartMs: media.sourceStartMs, durationMs: media.durationMs });
 				if (media.webcam) webcam = { ...webcam, ...media.webcam, enabled: true };
 				id = `clip-${initial.ui.nextClipIdRef.current++}`;
 				const next = sequence.map((clip) => ({
@@ -242,6 +252,7 @@ export function useRecordingLibrary(
 					? "Video added to timeline"
 					: `${completed} videos added to timeline`,
 			);
+			if (appended.length > 0) onClipsAppendedRef.current?.(appended);
 		} catch (error) {
 			if (!cancelled.current) toast.error(`Could not add video: ${String(error)}`);
 		} finally {

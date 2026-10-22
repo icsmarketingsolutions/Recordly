@@ -143,6 +143,11 @@
 		"openFailed": "Falha ao abrir link."
 	},
 	"keyboardShortcuts": {
+		"recordingTitle": "Durante a gravação (funciona com o HUD oculto)",
+		"recordingStop": "Parar gravação",
+		"recordingPause": "Pausar / retomar",
+		"recordingRetake": "Regravar",
+		"recordingCancel": "Cancelar gravação",
 		"trigger": "Atalhos",
 		"title": "Atalhos de teclado",
 		"description": "Referência rápida para os controles da linha do tempo e do editor.",
@@ -214,6 +219,10 @@
 		"apply": "Remover {{count}} pausas",
 		"applied": "{{count}} pausas removidas ({{seconds}} s)",
 		"failed": "Não foi possível analisar o áudio",
+		"fillers": "Cortar também vícios de fala (eh, hum…)",
+		"fillersExtra": "Mais palavras, separadas por vírgulas",
+		"fillersHint": "Gere as legendas primeiro: os vícios de fala vêm dos tempos por palavra.",
+		"fillersFound": "{{count}} vícios de fala",
 		"noSource": "Nenhum vídeo de origem carregado"
 	},
 	"openRecordingsFolder": "Abrir pasta de gravações"

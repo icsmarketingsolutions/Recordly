@@ -17,6 +17,12 @@ export const RECORDING_SESSION_MANIFEST_SUFFIX = ".recordly-session.json";
 export const WHISPER_MODEL_DOWNLOAD_URL =
 	"https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-small.bin";
 export const WHISPER_MODEL_DIR = path.join(USER_DATA_PATH, "whisper");
+/** A GPU build of whisper.cpp dropped here (zip from its GitHub releases) wins over the bundled CPU one. */
+export const WHISPER_GPU_EXECUTABLE_CANDIDATES = [
+	path.join(USER_DATA_PATH, "whisper-cuda", "bin", "Release", "whisper-cli.exe"),
+	path.join(USER_DATA_PATH, "whisper-cuda", "whisper-cli.exe"),
+	path.join(USER_DATA_PATH, "whisper-gpu", "whisper-cli"),
+];
 export const WHISPER_SMALL_MODEL_PATH = path.join(WHISPER_MODEL_DIR, "ggml-small.bin");
 /** Downloadable whisper.cpp models; larger ones hear names and accents better but run slower. */
 export const WHISPER_MODELS = {

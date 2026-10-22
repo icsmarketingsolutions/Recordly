@@ -5,6 +5,38 @@ import { type ClipRegion, getClipSourceEndMs, getClipSourceStartMs, sortClipRegi
 export interface SourceSilence {
 	startMs: number;
 	endMs: number | null;
+	/** A filler word ("eh", "um") is cut whole: no minimum length, no padding. */
+	kind?: "silence" | "filler";
+}
+
+/** Single-word fillers in Spanish and English, matched against caption words. */
+export const DEFAULT_FILLER_WORDS = [
+	"eh", "em", "ehm", "emm", "mm", "mmm", "um", "uh", "uhm", "umm", "hmm", "hm", "ah", "er", "erm",
+];
+
+function normalizeWord(text: string): string {
+	return text
+		.toLowerCase()
+		.normalize("NFD")
+		.replace(/[\u0300-\u036f]/g, "")
+		.replace(/[^a-z]/g, "");
+}
+
+/** Caption words (source time) that are fillers, as cuts for `planSilenceRemoval`. */
+export function findFillerWordSpans(
+	cues: ReadonlyArray<{ words?: ReadonlyArray<{ text: string; startMs: number; endMs: number }> }>,
+	fillers: ReadonlyArray<string> = DEFAULT_FILLER_WORDS,
+): SourceSilence[] {
+	const set = new Set(fillers.map(normalizeWord).filter(Boolean));
+	const spans: SourceSilence[] = [];
+	for (const cue of cues) {
+		for (const word of cue.words ?? []) {
+			if (!set.has(normalizeWord(word.text))) continue;
+			if (!(word.endMs > word.startMs)) continue;
+			spans.push({ startMs: word.startMs, endMs: word.endMs, kind: "filler" });
+		}
+	}
+	return spans.sort((left, right) => left.startMs - right.startMs);
 }
 
 export interface SilenceRemovalOptions {
@@ -30,7 +62,7 @@ export interface SilenceRemovalPlan {
 }
 
 /** A cut shorter than this (source ms) is not worth a clip boundary. */
-const MIN_CUT_MS = 100;
+const MIN_CUT_MS = 80;
 
 interface SourceSpan {
 	startMs: number;
@@ -52,12 +84,13 @@ function planCutsForClip(
 	const cuts: SourceSpan[] = [];
 	for (const silence of silences) {
 		const silenceEnd = silence.endMs ?? Math.max(options.sourceDurationMs, silence.startMs);
-		if (silenceEnd - silence.startMs < options.minSilenceMs) continue;
+		const filler = silence.kind === "filler";
+		if (!filler && silenceEnd - silence.startMs < options.minSilenceMs) continue;
 		if (silenceEnd <= sourceStart || silence.startMs >= sourceEnd) continue;
 		// A silence touching the clip edge is trimmed fully; padding only protects speech.
-		const cutStart =
-			silence.startMs <= sourceStart ? sourceStart : silence.startMs + options.padMs;
-		const cutEnd = silenceEnd >= sourceEnd ? sourceEnd : silenceEnd - options.padMs;
+		const pad = filler ? 0 : options.padMs;
+		const cutStart = silence.startMs <= sourceStart ? sourceStart : silence.startMs + pad;
+		const cutEnd = silenceEnd >= sourceEnd ? sourceEnd : silenceEnd - pad;
 		const start = Math.max(sourceStart, Math.round(cutStart));
 		const end = Math.min(sourceEnd, Math.round(cutEnd));
 		if (end - start < MIN_CUT_MS) continue;

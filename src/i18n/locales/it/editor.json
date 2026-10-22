@@ -143,6 +143,11 @@
 		"openFailed": "Apertura del link non riuscita."
 	},
 	"keyboardShortcuts": {
+		"recordingTitle": "Durante la registrazione (anche con HUD nascosto)",
+		"recordingStop": "Ferma registrazione",
+		"recordingPause": "Pausa / riprendi",
+		"recordingRetake": "Rifai la ripresa",
+		"recordingCancel": "Annulla registrazione",
 		"trigger": "Scorciatoie",
 		"title": "Scorciatoie da tastiera",
 		"description": "Riferimento rapido per i controlli della timeline e dell'editor.",
@@ -214,6 +219,10 @@
 		"apply": "Rimuovi {{count}} pause",
 		"applied": "Rimosse {{count}} pause ({{seconds}} s)",
 		"failed": "Impossibile analizzare l’audio",
+		"fillers": "Taglia anche gli intercalari (eh, ehm…)",
+		"fillersExtra": "Altre parole, separate da virgole",
+		"fillersHint": "Genera prima i sottotitoli: gli intercalari vengono dai tempi per parola.",
+		"fillersFound": "{{count}} intercalari",
 		"noSource": "Nessun video sorgente caricato"
 	},
 	"openRecordingsFolder": "Apri cartella registrazioni"

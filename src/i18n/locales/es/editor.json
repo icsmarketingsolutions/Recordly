@@ -143,6 +143,11 @@
 		"openFailed": "No se pudo abrir el enlace."
 	},
 	"keyboardShortcuts": {
+		"recordingTitle": "Mientras grabás (funciona con la HUD oculta)",
+		"recordingStop": "Detener grabación",
+		"recordingPause": "Pausar / reanudar",
+		"recordingRetake": "Volver a grabar",
+		"recordingCancel": "Cancelar grabación",
 		"trigger": "Atajos",
 		"title": "Atajos de teclado",
 		"description": "Referencia rápida para los controles de la línea de tiempo y del editor.",
@@ -214,6 +219,10 @@
 		"apply": "Quitar {{count}} pausas",
 		"applied": "Se quitaron {{count}} pausas ({{seconds}} s)",
 		"failed": "No se pudo analizar el audio",
+		"fillers": "Quitar también muletillas (eh, em…)",
+		"fillersExtra": "Más palabras, separadas por comas",
+		"fillersHint": "Generá los subtítulos primero: las muletillas salen de sus tiempos por palabra.",
+		"fillersFound": "{{count}} muletillas",
 		"noSource": "No hay un video cargado"
 	},
 	"openRecordingsFolder": "Abrir carpeta de grabaciones"

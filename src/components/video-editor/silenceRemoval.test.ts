@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { rippleRegions } from "./clipSequence";
-import { planSilenceRemoval } from "./silenceRemoval";
+import { findFillerWordSpans, planSilenceRemoval } from "./silenceRemoval";
 import { type ClipRegion, getClipSourceEndMs, getClipSourceStartMs } from "./types";
 
 function createIdFactory() {
@@ -80,6 +80,35 @@ describe("planSilenceRemoval", () => {
 		});
 		expect(plan.removedCount).toBe(0);
 		expect(plan.after).toEqual([clip]);
+	});
+
+	it("cuts filler words whole, ignoring the minimum pause and padding", () => {
+		const clip: ClipRegion = { id: "clip-1", startMs: 0, endMs: 10_000, speed: 1 };
+		const fillers = findFillerWordSpans([
+			{
+				words: [
+					{ text: "Hola", startMs: 0, endMs: 400 },
+					{ text: "eh,", startMs: 400, endMs: 700 },
+					{ text: "bueno", startMs: 700, endMs: 1200 },
+					{ text: "Ehm…", startMs: 5000, endMs: 5300 },
+				],
+			},
+		]);
+		expect(fillers).toEqual([
+			{ startMs: 400, endMs: 700, kind: "filler" },
+			{ startMs: 5000, endMs: 5300, kind: "filler" },
+		]);
+		const plan = planSilenceRemoval([clip], fillers, {
+			...baseOptions,
+			createId: createIdFactory(),
+		});
+		expect(plan.removedCount).toBe(2);
+		expect(plan.removedMs).toBe(600);
+		expect(plan.after.map((piece) => [piece.startMs, piece.endMs])).toEqual([
+			[0, 400],
+			[400, 4700],
+			[4700, 9400],
+		]);
 	});
 
 	it("leaves clips untouched when nothing qualifies", () => {

@@ -5,14 +5,23 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { toast } from "@/components/ui/toast";
 import type { useI18n } from "@/contexts/I18nContext";
 import { SliderControl } from "../SliderControl";
-import { planSilenceRemoval, type SilenceRemovalPlan, type SourceSilence } from "../silenceRemoval";
-import type { ClipRegion } from "../types";
+import {
+	DEFAULT_FILLER_WORDS,
+	findFillerWordSpans,
+	planSilenceRemoval,
+	type SilenceRemovalPlan,
+	type SourceSilence,
+} from "../silenceRemoval";
+import type { CaptionCue, ClipRegion } from "../types";
+import { Switch } from "@/components/ui/switch";
 
 type Props = {
 	t: ReturnType<typeof useI18n>["t"];
 	videoSourcePath: string | null;
 	clipRegions: ClipRegion[];
 	sourceDurationMs: number;
+	/** Caption cues with word timings, used to find filler words. */
+	autoCaptions: CaptionCue[];
 	onRemoveSilences: (
 		silences: SourceSilence[],
 		options: { minSilenceMs: number; padMs: number },
@@ -38,12 +47,15 @@ export function RemoveSilencesPopover({
 	videoSourcePath,
 	clipRegions,
 	sourceDurationMs,
+	autoCaptions,
 	onRemoveSilences,
 }: Props) {
 	const [open, setOpen] = useState(false);
 	const [minPauseS, setMinPauseS] = useState(DEFAULT_MIN_PAUSE_S);
 	const [padMs, setPadMs] = useState(DEFAULT_PAD_MS);
 	const [noiseDb, setNoiseDb] = useState(DEFAULT_NOISE_DB);
+	const [cutFillers, setCutFillers] = useState(false);
+	const [extraFillers, setExtraFillers] = useState("");
 	const [analyzing, setAnalyzing] = useState(false);
 	const [silences, setSilences] = useState<SourceSilence[] | null>(null);
 	const [analyzedKey, setAnalyzedKey] = useState<string | null>(null);
@@ -89,20 +101,37 @@ export function RemoveSilencesPopover({
 		return () => window.clearTimeout(timer);
 	}, [open, analyzedKey, videoSourcePath, noiseDb, analyze]);
 
+	const hasWordTimings = useMemo(
+		() => autoCaptions.some((cue) => cue.words && cue.words.length > 0),
+		[autoCaptions],
+	);
+	const fillerSpans = useMemo(() => {
+		if (!cutFillers || !hasWordTimings) return [];
+		const extra = extraFillers
+			.split(/[,\s]+/)
+			.map((word) => word.trim())
+			.filter(Boolean);
+		return findFillerWordSpans(autoCaptions, [...DEFAULT_FILLER_WORDS, ...extra]);
+	}, [cutFillers, hasWordTimings, extraFillers, autoCaptions]);
+	const cuts = useMemo(
+		() => (silences ? [...silences, ...fillerSpans] : null),
+		[silences, fillerSpans],
+	);
+
 	const preview = useMemo(() => {
-		if (!silences) return null;
+		if (!cuts) return null;
 		let next = 0;
-		return planSilenceRemoval(clipRegions, silences, {
+		return planSilenceRemoval(clipRegions, cuts, {
 			minSilenceMs: Math.round(minPauseS * 1000),
 			padMs,
 			sourceDurationMs,
 			createId: () => `preview-${next++}`,
 		});
-	}, [silences, clipRegions, minPauseS, padMs, sourceDurationMs]);
+	}, [cuts, clipRegions, minPauseS, padMs, sourceDurationMs]);
 
 	const handleApply = () => {
-		if (!silences || !preview || preview.removedCount === 0) return;
-		const plan = onRemoveSilences(silences, {
+		if (!cuts || !preview || preview.removedCount === 0) return;
+		const plan = onRemoveSilences(cuts, {
 			minSilenceMs: Math.round(minPauseS * 1000),
 			padMs,
 		});
@@ -166,15 +195,55 @@ export function RemoveSilencesPopover({
 						onChange={setNoiseDb}
 						formatValue={(value) => `${Math.round(value)} dB`}
 					/>
+					<div className="flex flex-col gap-1.5">
+						<label className="flex items-center justify-between gap-2 text-xs">
+							<span className={hasWordTimings ? "" : "text-muted-foreground"}>
+								{t("editor.silence.fillers", "Also cut filler words (eh, um…)")}
+							</span>
+							<Switch
+								checked={cutFillers && hasWordTimings}
+								onCheckedChange={setCutFillers}
+								disabled={!hasWordTimings}
+								aria-label={t("editor.silence.fillers", "Also cut filler words (eh, um…)")}
+								data-testid="remove-fillers-switch"
+							/>
+						</label>
+						{hasWordTimings ? (
+							cutFillers ? (
+								<input
+									type="text"
+									value={extraFillers}
+									onChange={(event) => setExtraFillers(event.target.value)}
+									placeholder={t(
+										"editor.silence.fillersExtra",
+										"More words, separated by commas",
+									)}
+									aria-label={t("editor.silence.fillersExtra", "More words, separated by commas")}
+									className="h-8 w-full rounded-md border border-input bg-background px-2 text-xs outline-none placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring"
+								/>
+							) : null
+						) : (
+							<p className="text-[11px] text-muted-foreground">
+								{t(
+									"editor.silence.fillersHint",
+									"Generate captions first: filler words come from their word timings.",
+								)}
+							</p>
+						)}
+					</div>
 					<p className="text-xs tabular-nums text-muted-foreground" aria-live="polite">
 						{analyzing
 							? t("editor.silence.analyzing", "Analyzing audio…")
 							: preview
 								? preview.removedCount > 0
-									? t("editor.silence.found", "{{count}} pauses · saves {{seconds}} s", {
-											count: preview.removedCount,
+									? `${t("editor.silence.found", "{{count}} pauses · saves {{seconds}} s", {
+											count: preview.removedCount - fillerSpans.length,
 											seconds: formatSeconds(preview.removedMs),
-										})
+										})}${
+											fillerSpans.length > 0
+												? ` · ${t("editor.silence.fillersFound", "{{count}} filler words", { count: fillerSpans.length })}`
+												: ""
+										}`
 									: t("editor.silence.none", "No pauses that long were found.")
 								: ""}
 					</p>

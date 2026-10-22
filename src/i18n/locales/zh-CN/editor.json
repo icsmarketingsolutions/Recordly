@@ -143,6 +143,11 @@
 		"openFailed": "打开链接失败。"
 	},
 	"keyboardShortcuts": {
+		"recordingTitle": "录制时（HUD 隐藏也有效）",
+		"recordingStop": "停止录制",
+		"recordingPause": "暂停 / 继续",
+		"recordingRetake": "重新录制",
+		"recordingCancel": "取消录制",
 		"trigger": "快捷键",
 		"title": "键盘快捷键",
 		"description": "时间线和编辑器控制的快速参考。",
@@ -214,6 +219,10 @@
 		"apply": "删除 {{count}} 处停顿",
 		"applied": "已删除 {{count}} 处停顿（{{seconds}} 秒）",
 		"failed": "无法分析音频",
+		"fillers": "同时剪掉口头禅（呃、嗯…）",
+		"fillersExtra": "更多词语，用逗号分隔",
+		"fillersHint": "请先生成字幕：口头禅来自逐词时间。",
+		"fillersFound": "{{count}} 个口头禅",
 		"noSource": "未加载源视频"
 	},
 	"openRecordingsFolder": "打开录制文件夹"

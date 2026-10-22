@@ -142,6 +142,11 @@
 		"openFailed": "Link konnte nicht geöffnet werden."
 	},
 	"keyboardShortcuts": {
+		"recordingTitle": "Während der Aufnahme (auch bei verstecktem HUD)",
+		"recordingStop": "Aufnahme stoppen",
+		"recordingPause": "Pause / fortsetzen",
+		"recordingRetake": "Neu aufnehmen",
+		"recordingCancel": "Aufnahme abbrechen",
 		"trigger": "Tastenkombinationen",
 		"title": "Tastenkombinationen",
 		"description": "Kurzanleitung für die Steuerelemente der Zeitleiste und des Editors.",
@@ -213,6 +218,10 @@
 		"apply": "{{count}} Pausen entfernen",
 		"applied": "{{count}} Pausen entfernt ({{seconds}} s)",
 		"failed": "Audio konnte nicht analysiert werden",
+		"fillers": "Auch Füllwörter schneiden (äh, ähm…)",
+		"fillersExtra": "Weitere Wörter, durch Kommas getrennt",
+		"fillersHint": "Erst Untertitel erzeugen: Füllwörter kommen aus deren Wortzeiten.",
+		"fillersFound": "{{count}} Füllwörter",
 		"noSource": "Kein Quellvideo geladen"
 	},
 	"openRecordingsFolder": "Aufnahmeordner öffnen"

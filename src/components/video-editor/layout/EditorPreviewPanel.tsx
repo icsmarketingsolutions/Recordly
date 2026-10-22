@@ -310,6 +310,7 @@ export function EditorPreviewPanel(props: Props) {
 						t={t}
 						videoSourcePath={videoSourcePath}
 						clipRegions={timeline.clipRegions}
+						autoCaptions={timeline.autoCaptions}
 						sourceDurationMs={sourceDurationMs}
 						onRemoveSilences={clipCommands.handleRemoveSilences}
 					/>

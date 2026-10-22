@@ -143,6 +143,11 @@
 		"openFailed": "打開連結失敗。"
 	},
 	"keyboardShortcuts": {
+		"recordingTitle": "錄製時（HUD 隱藏也有效）",
+		"recordingStop": "停止錄製",
+		"recordingPause": "暫停 / 繼續",
+		"recordingRetake": "重新錄製",
+		"recordingCancel": "取消錄製",
 		"trigger": "快速鍵",
 		"title": "鍵盤快速鍵",
 		"description": "時間線和編輯器控制的快速參考。",
@@ -214,6 +219,10 @@
 		"apply": "刪除 {{count}} 處停頓",
 		"applied": "已刪除 {{count}} 處停頓（{{seconds}} 秒）",
 		"failed": "無法分析音訊",
+		"fillers": "同時剪掉口頭禪（呃、嗯…）",
+		"fillersExtra": "更多詞語，以逗號分隔",
+		"fillersHint": "請先產生字幕：口頭禪來自逐詞時間。",
+		"fillersFound": "{{count}} 個口頭禪",
 		"noSource": "未載入來源影片"
 	},
 	"openRecordingsFolder": "打開錄製資料夾"
