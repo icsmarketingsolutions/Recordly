@@ -814,6 +814,7 @@ contextBridge.exposeInMainWorld("electronAPI", {
 		whisperExecutablePath?: string;
 		whisperModelPath: string;
 		language?: string;
+		prompt?: string;
 	}) => {
 		return ipcRenderer.invoke("generate-auto-captions", options);
 	},

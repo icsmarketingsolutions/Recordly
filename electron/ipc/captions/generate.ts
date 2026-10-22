@@ -289,6 +289,8 @@ async function generateCaptionsForSource(options: {
 	whisperExecutablePath?: string;
 	whisperModelPath: string;
 	language?: string;
+	/** Project glossary: Whisper's initial prompt, which biases spelling of names and jargon. */
+	prompt?: string;
 	candidates: CaptionAudioCandidate[];
 }) {
 	const ffmpegPath = getFfmpegBinaryPath();
@@ -331,6 +333,7 @@ async function generateCaptionsForSource(options: {
 			outputBase,
 			"-l",
 			language,
+			...(options.prompt?.trim() ? ["--prompt", options.prompt.trim().slice(0, 1000)] : []),
 			"-np",
 			// Do not carry a hallucinated phrase through later decoding windows.
 			"-mc",
@@ -406,6 +409,7 @@ export async function generateAutoCaptionsFromVideo(options: {
 	whisperExecutablePath?: string;
 	whisperModelPath: string;
 	language?: string;
+	prompt?: string;
 }) {
 	const candidates = await resolveCaptionAudioCandidates(options.videoPath);
 	const microphone = candidates.filter((source) => source.label === "microphone audio sidecar");

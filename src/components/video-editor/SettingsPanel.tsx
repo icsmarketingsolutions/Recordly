@@ -2125,6 +2125,31 @@ export function SettingsPanel({
 						</SelectContent>
 					</Select>
 				</div>
+				<div className="space-y-1.5">
+					<div className="text-sm font-medium text-foreground">
+						{tSettings("captions.glossary", "Glossary")}
+					</div>
+					<textarea
+						aria-label={tSettings("captions.glossary", "Glossary")}
+						placeholder={tSettings(
+							"captions.glossaryPlaceholder",
+							"Names, brands and terms, separated by commas",
+						)}
+						value={autoCaptionSettings.glossary ?? ""}
+						onChange={(event) =>
+							updateAutoCaptionSettings({
+								glossary: event.target.value.slice(0, 1000),
+							})
+						}
+						className="block h-16 w-full resize-none rounded-md border border-input bg-background px-3 py-2 text-sm outline-none placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring"
+					/>
+					<p className="text-[11px] text-muted-foreground">
+						{tSettings(
+							"captions.glossaryHint",
+							"Saved with the project and used the next time captions are generated.",
+						)}
+					</p>
+				</div>
 				<div className="flex items-center justify-between gap-3">
 					<div className="text-sm font-medium text-foreground">
 						{tSettings("captions.animation", "Animation")}

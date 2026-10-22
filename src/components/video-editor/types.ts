@@ -606,6 +606,8 @@ export interface AutoCaptionSettings {
 	/** Show the hover ghost on the timeline caption track for click-to-add. */
 	timelineQuickAdd: boolean;
 	language: string;
+	/** Names, brands and jargon handed to Whisper as its initial prompt so it spells them right. */
+	glossary?: string;
 	fontFamily: string;
 	fontSize: number;
 	bottomOffset: number;
