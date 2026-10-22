@@ -267,6 +267,7 @@ export function EditorShell(props: Props) {
 				t={t}
 				headerLeftControlsPaddingClass={headerLeftControlsPaddingClass}
 				project={project}
+				setAspectRatio={ui.setAspectRatio}
 				projectBrowserTriggerRef={ui.projectBrowserTriggerRef}
 				projectNameInputRef={ui.projectNameInputRef}
 				projectDisplayName={snapshot.projectDisplayName}

@@ -14,6 +14,7 @@ import type {
 	GifSizePreset,
 } from "@/lib/exporter";
 import { GIF_FRAME_RATES, GIF_SIZE_PRESETS, MP4_FRAME_RATES } from "@/lib/exporter";
+import { EXPORT_PRESETS, type ExportPreset } from "./export/exportPresets";
 
 interface ExportSettingsMenuProps {
 	exportFormat: ExportFormat;
@@ -40,6 +41,8 @@ interface ExportSettingsMenuProps {
 	onGifSizePresetChange?: (preset: GifSizePreset) => void;
 	gifOutputDimensions: { width: number; height: number };
 	onExport?: () => void;
+	/** Applies a one-click preset (aspect ratio, quality, fps, encoding). */
+	onApplyPreset?: (preset: ExportPreset) => void;
 	className?: string;
 	hideHeading?: boolean;
 	hideAction?: boolean;
@@ -121,6 +124,7 @@ export function ExportSettingsMenu({
 	onGifSizePresetChange,
 	gifOutputDimensions,
 	onExport,
+	onApplyPreset,
 	className,
 	hideHeading = false,
 	hideAction = false,
@@ -166,6 +170,26 @@ export function ExportSettingsMenu({
 						]}
 					/>
 				)}
+				{exportFormat === "mp4" && onApplyPreset ? (
+					<div className="flex flex-col gap-2">
+						<Label>{tSettings("export.presets.title", "One-click presets")}</Label>
+						<div className="flex flex-wrap gap-2">
+							{EXPORT_PRESETS.map((preset) => (
+								<Button
+									key={preset.id}
+									type="button"
+									variant="outline"
+									size="sm"
+									className="h-8 text-xs"
+									onClick={() => onApplyPreset(preset)}
+									data-testid={`export-preset-${preset.id}`}
+								>
+									{tSettings(`export.presets.${preset.id}`)}
+								</Button>
+							))}
+						</div>
+					</div>
+				) : null}
 				{exportFormat === "mp4" ? (
 					<>
 						<Choices

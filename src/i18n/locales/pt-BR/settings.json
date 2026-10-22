@@ -226,6 +226,12 @@
 		"uploadErrorDescription": "Somente imagens JPG e JPEG são suportadas."
 	},
 	"export": {
+		"presets": {
+			"title": "Predefinições em um clique",
+			"instagram": "Reel do Instagram 9:16",
+			"youtube": "YouTube 16:9 · 60 fps",
+			"whatsapp": "WhatsApp (arquivo leve)"
+		},
 		"title": "Exportar",
 		"mp4": "MP4",
 		"gif": "GIF",

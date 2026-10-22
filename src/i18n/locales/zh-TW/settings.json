@@ -226,6 +226,12 @@
 		"uploadErrorDescription": "僅支援 JPG 與 JPEG 圖片。"
 	},
 	"export": {
+		"presets": {
+			"title": "一鍵預設",
+			"instagram": "Instagram Reel 9:16",
+			"youtube": "YouTube 16:9 · 60 fps",
+			"whatsapp": "WhatsApp（小檔案）"
+		},
 		"title": "匯出",
 		"mp4": "MP4",
 		"gif": "GIF",

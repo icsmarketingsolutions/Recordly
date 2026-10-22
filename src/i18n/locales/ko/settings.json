@@ -226,6 +226,12 @@
 		"uploadErrorDescription": "JPG 또는 JPEG 이미지 파일을 업로드해 주세요."
 	},
 	"export": {
+		"presets": {
+			"title": "원클릭 프리셋",
+			"instagram": "Instagram 릴스 9:16",
+			"youtube": "YouTube 16:9 · 60 fps",
+			"whatsapp": "WhatsApp (작은 파일)"
+		},
 		"title": "내보내기",
 		"mp4": "MP4",
 		"gif": "GIF",

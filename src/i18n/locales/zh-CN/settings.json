@@ -226,6 +226,12 @@
 		"uploadErrorDescription": "仅支持 JPG 和 JPEG 图片。"
 	},
 	"export": {
+		"presets": {
+			"title": "一键预设",
+			"instagram": "Instagram Reel 9:16",
+			"youtube": "YouTube 16:9 · 60 fps",
+			"whatsapp": "WhatsApp（小文件）"
+		},
 		"title": "导出",
 		"mp4": "MP4",
 		"gif": "GIF",

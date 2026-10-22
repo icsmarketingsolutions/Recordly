@@ -1,3 +1,4 @@
+import type { AspectRatio } from "@/utils/aspectRatioUtils";
 import { FeedbackDialog } from "@/components/feedback/FeedbackDialog";
 import { Separator } from "@heroui/react";
 import {
@@ -27,6 +28,7 @@ type Props = {
 	t: ReturnType<typeof useI18n>["t"];
 	headerLeftControlsPaddingClass: string;
 	project: ReturnType<typeof useProjectState>;
+	setAspectRatio?: (aspectRatio: AspectRatio) => void;
 	projectBrowserTriggerRef: RefObject<HTMLButtonElement | null>;
 	projectNameInputRef: RefObject<HTMLInputElement | null>;
 	projectDisplayName: string;
@@ -247,6 +249,7 @@ export function EditorHeader(props: Props) {
 					shareRequestNonce={props.shareRequestNonce}
 					authToken={props.authToken}
 					accountId={props.accountId}
+					setAspectRatio={props.setAspectRatio}
 				/>
 			</div>
 		</header>

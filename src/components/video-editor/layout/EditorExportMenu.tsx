@@ -1,3 +1,4 @@
+import type { AspectRatio } from "@/utils/aspectRatioUtils";
 import { ExportErrorReportButton } from "@/components/feedback/ExportErrorReportButton";
 import { LinkSimple, HardDrive, Export } from "@phosphor-icons/react";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
@@ -40,6 +41,7 @@ type Props = {
 	shareRequestNonce: number;
 	authToken?: string;
 	accountId?: string;
+	setAspectRatio?: (aspectRatio: AspectRatio) => void;
 };
 
 export function EditorExportMenu(props: Props) {
@@ -157,6 +159,13 @@ export function EditorExportMenu(props: Props) {
 			mp4OutputDimensions={mp4OutputDimensions}
 			gifOutputDimensions={gifOutputDimensions}
 			onExport={handleStartExportFromDropdown}
+			onApplyPreset={(preset) => {
+				setExportFormat("mp4");
+				setExportQuality(preset.quality);
+				setMp4FrameRate(preset.frameRate);
+				setExportEncodingMode(preset.encodingMode);
+				props.setAspectRatio?.(preset.aspectRatio);
+			}}
 			hideHeading
 			hideAction={destination === "link"}
 			linkMode={destination === "link"}

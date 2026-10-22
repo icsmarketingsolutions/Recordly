@@ -226,6 +226,12 @@
 		"uploadErrorDescription": "Seules les images JPG et JPEG sont prises en charge."
 	},
 	"export": {
+		"presets": {
+			"title": "Préréglages en un clic",
+			"instagram": "Reel Instagram 9:16",
+			"youtube": "YouTube 16:9 · 60 ips",
+			"whatsapp": "WhatsApp (fichier léger)"
+		},
 		"title": "Exportation",
 		"mp4": "MP4",
 		"gif": "GIF",
