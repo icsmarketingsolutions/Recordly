@@ -18,6 +18,8 @@
 		"label": "Velocità"
 	},
 	"clip": {
+		"rerecord": "Registra di nuovo questo clip",
+		"rerecordHint": "Registra una nuova ripresa che sostituisce questo clip nella timeline.",
 		"title": "Clip",
 		"mute": "Disattiva l'audio del clip",
 		"resetAudioSettings": "Ripristina impostazioni audio",

@@ -5,7 +5,7 @@ import { SettingsSections, SettingsCategory } from "./SettingsSections";
 import { Card, RadioGroup, Radio, Label, Description } from "@heroui/react";
 import { ProgressBar } from "@heroui/react";
 import { ColorControl, ColorPalette } from "@/components/ui/color-picker";
-import { Palette, Trash as Trash2, UploadSimple as Upload } from "@/components/ui/icons";
+import { Palette, Trash as Trash2, UploadSimple as Upload, VideoCamera } from "@/components/ui/icons";
 import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "@/components/ui/toast";
@@ -446,6 +446,7 @@ interface SettingsPanelProps {
 	onClipSpeedChange?: (speed: number) => void;
 	onClipMutedChange?: (muted: boolean) => void;
 	onClipDelete?: (id: string) => void;
+	onClipRerecord?: (id: string) => void;
 	selectedAudioId?: string | null;
 	selectedAudioVolume?: number | null;
 	selectedAudioNormalize?: boolean | null;
@@ -907,6 +908,7 @@ export function SettingsPanel({
 	onClipSpeedChange,
 	onClipMutedChange,
 	onClipDelete,
+	onClipRerecord,
 	selectedAudioId,
 	selectedAudioVolume,
 	selectedAudioNormalize,
@@ -3437,6 +3439,23 @@ export function SettingsPanel({
 					})() && "hidden",
 				)}
 			>
+				{activeEffectSection === "clip" && selectedClipId && onClipRerecord && (
+					<Button
+						onClick={() => {
+							if (selectedClipId) onClipRerecord(selectedClipId);
+						}}
+						variant="outline"
+						size="sm"
+						className="h-9 w-full gap-2 text-xs"
+						title={tSettings(
+							"clip.rerecordHint",
+							"Record a new take that replaces this clip on the timeline.",
+						)}
+					>
+						<VideoCamera className="h-3 w-3" />
+						{tSettings("clip.rerecord", "Re-record this clip")}
+					</Button>
+				)}
 				{activeEffectSection === "clip" && selectedClipId && (
 					<Button
 						onClick={() => {

@@ -18,6 +18,8 @@
 		"label": "Snelheid"
 	},
 	"clip": {
+		"rerecord": "Deze clip opnieuw opnemen",
+		"rerecordHint": "Neemt een nieuwe take op die deze clip op de tijdlijn vervangt.",
 		"title": "Clip",
 		"mute": "Clip dempen",
 		"resetAudioSettings": "Audio-instellingen resetten",

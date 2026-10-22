@@ -18,6 +18,8 @@
 		"label": "速度"
 	},
 	"clip": {
+		"rerecord": "重新录制此片段",
+		"rerecordHint": "录制一段新素材，替换时间线上的此片段。",
 		"title": "片段",
 		"mute": "将片段静音",
 		"resetAudioSettings": "重置音频设置",

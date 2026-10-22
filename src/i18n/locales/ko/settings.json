@@ -18,6 +18,8 @@
 		"label": "속도"
 	},
 	"clip": {
+		"rerecord": "이 클립 다시 녹화",
+		"rerecordHint": "타임라인에서 이 클립을 대체할 새 테이크를 녹화합니다.",
 		"title": "클립",
 		"mute": "클립 음소거",
 		"resetAudioSettings": "오디오 설정 초기화",

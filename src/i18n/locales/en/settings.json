@@ -24,6 +24,8 @@
 		"label": "Speed"
 	},
 	"clip": {
+		"rerecord": "Re-record this clip",
+		"rerecordHint": "Record a new take that replaces this clip on the timeline.",
 		"title": "Clip",
 		"mute": "Mute clip",
 		"resetAudioSettings": "Reset audio settings",

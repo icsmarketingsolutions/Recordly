@@ -18,6 +18,8 @@
 		"label": "Geschwindigkeit"
 	},
 	"clip": {
+		"rerecord": "Diesen Clip neu aufnehmen",
+		"rerecordHint": "Nimmt eine neue Aufnahme auf, die diesen Clip in der Zeitleiste ersetzt.",
 		"title": "Clip",
 		"mute": "Clip stummschalten",
 		"resetAudioSettings": "Audioeinstellungen zurücksetzen",

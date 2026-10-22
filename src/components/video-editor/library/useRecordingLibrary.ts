@@ -103,6 +103,8 @@ export function useRecordingLibrary(
 	);
 	const cancelled = useRef(false);
 	const [cancelling, setCancelling] = useState(false);
+	/** Clip the next appended take replaces ("Re-record this clip"). */
+	const replaceClipIdRef = useRef<string | null>(null);
 	const cancelImport = async () => {
 		cancelled.current = true;
 		setCancelling(true);
@@ -193,6 +195,11 @@ export function useRecordingLibrary(
 				}
 			}
 			if (!media) return;
+			// Re-recording: the new take was inserted at the old clip's position; drop the old one.
+			const replacedClipId = replaceClipIdRef.current;
+			replaceClipIdRef.current = null;
+			if (replacedClipId && sequence.some((clip) => clip.id === replacedClipId))
+				sequence = packClipSequence(sequence.filter((clip) => clip.id !== replacedClipId));
 			const { project, timeline, ui, appearance } = current.current;
 			if (project.videoSourcePath !== source)
 				throw new Error("The project changed while importing. Add the recordings again.");
@@ -257,6 +264,15 @@ export function useRecordingLibrary(
 	// recording is final it is appended after the last clip.
 	const recordTake = useCallback(async () => {
 		if (lock.current) return;
+		replaceClipIdRef.current = null;
+		setOpen(false);
+		await window.electronAPI.showRecordingHudForAppend();
+	}, []);
+
+	/** Record a new take that takes the place of `clipId` on the timeline. */
+	const recordTakeReplacing = useCallback(async (clipId: string) => {
+		if (lock.current) return;
+		replaceClipIdRef.current = clipId;
 		setOpen(false);
 		await window.electronAPI.showRecordingHudForAppend();
 	}, []);
@@ -264,6 +280,7 @@ export function useRecordingLibrary(
 	// Append any video file from disk (not only library recordings).
 	const addFiles = async () => {
 		if (lock.current) return;
+		replaceClipIdRef.current = null;
 		const result = await window.electronAPI.pickRecordingFiles();
 		if (!result.success || !result.paths.length) return;
 		await addToTimeline(result.paths);
@@ -275,7 +292,14 @@ export function useRecordingLibrary(
 		() =>
 			window.electronAPI.onAppendTakeReady?.((session) => {
 				void refresh();
-				void appendRef.current([session.videoPath]);
+				const replaced = replaceClipIdRef.current;
+				const index = replaced
+					? sortClipRegions(current.current.timeline.clipRegions).findIndex(
+							(clip) => clip.id === replaced,
+						)
+					: -1;
+				if (replaced && index < 0) replaceClipIdRef.current = null;
+				void appendRef.current([session.videoPath], index >= 0 ? index : undefined);
 			}),
 		[refresh],
 	);
@@ -298,6 +322,7 @@ export function useRecordingLibrary(
 		cancelling,
 		cancelImport,
 		addToTimeline,
+		recordTakeReplacing,
 		recordTake,
 		addFiles,
 	};

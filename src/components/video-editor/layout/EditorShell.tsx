@@ -369,6 +369,7 @@ export function EditorShell(props: Props) {
 							...settingsPanelProps,
 							accountUser: auth.user,
 							onShowOnboarding: showOnboarding,
+							onClipRerecord: (id) => void library.recordTakeReplacing(id),
 						}}
 					/>
 					<EditorPreviewPanel
