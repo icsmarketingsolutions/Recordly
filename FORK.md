@@ -54,6 +54,11 @@ nuestros cambios encima. `rapid-captions` y `camera-fx` son las ramas histórica
   arrastró por última vez (`hudOverlayDisplayId` en `app-settings.json`).
 - **Sin cuenta obligatoria**: grabar y guardar nunca piden iniciar sesión; el onboarding
   del upstream solo se abre a pedido y siempre se puede cerrar.
+- **Edición con Claude** (`npm run claude-edit`, `CLAUDE-EDIT.md`): CLI que transcribe
+  con Whisper + DTW, lista las frases con ids de palabra y aplica un plan de cortes
+  (rangos de palabras con `expect`, pausas, muletillas) con la misma lógica de «Quitar
+  pausas», escribiendo un proyecto aparte `<nombre> (Claude).recordly`; `listen`
+  vuelve a transcribir la línea de tiempo editada para verificar los cortes.
 
 ## Cómo se construye (Windows)
 

@@ -18,6 +18,7 @@
 		"dev": "npm run prepare:camera-fx && vite --config vite.config.ts",
 		"postinstall": "node scripts/postinstall.mjs",
 		"build": "npm run build:platform-native-helpers && tsc && npm run prepare:camera-fx && vite build --config vite.config.ts && npm run normalize:electron-main-cjs && npm run smoke:electron-main-cjs && electron-builder",
+		"claude-edit": "node scripts/claude-edit.mjs",
 		"lint": "biome lint .",
 		"lint:fix": "biome lint --write .",
 		"format": "biome format --write .",
