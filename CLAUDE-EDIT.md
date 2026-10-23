@@ -45,15 +45,16 @@ npm run -s claude-edit -- frame       "<proyecto>.recordly" --at 1:23.4
 `timeline` (palabras en tiempo del video editado) y `export --no-captions` (Recordly
 renderiza el proyecto en un perfil aparte, sin sus subtítulos) alimentan
 `_videos-brag/_motor/sobrevideo.mjs`, que pone encima subtítulos dinámicos, títulos,
-llamadas, cifras, golpes de zoom, SFX y música. Ver `_videos-brag/_motor/SOBREVIDEO.md`.
+llamadas, cifras, golpes de zoom, SFX y música. Ver `_videos-brag/_motor/SOBREVIDEO.md`
+y, para el criterio de calidad, `GUIA-ESTILO-VIDEO.md`.
 
 ## El plan
 
 ```json
 {
   "cuts": [
-    { "words": "302-303", "expect": "tiene que", "reason": "arranque en falso" },
-    { "words": "534-555", "expect": "Pero sí, si quisieran …", "reason": "cierre repetido" },
+    { "words": "302-303", "expect": "o sea", "reason": "arranque en falso" },
+    { "words": "534-555", "expect": "<la primera toma completa, palabra por palabra>", "reason": "cierre repetido" },
     { "from": "1:02.4", "to": "1:05.0", "reason": "pantalla con datos reales" }
   ],
   "pauses": { "minMs": 700, "padMs": 150 },
@@ -88,8 +89,7 @@ llamadas, cifras, golpes de zoom, SFX y música. Ver `_videos-brag/_motor/SOBREV
 
 ## Probado (23-oct-2026)
 
-«video para osa great adventure» (3:37): 4 cortes (arranque en falso, «en este en
-específico», «un sistema» repetido, cierre grabado dos veces) + pausas ≥ 0,7 s →
-3:00, 22 clips. `listen` y una exportación real de Recordly
+Una grabación real de 3:37: 4 cortes (arranque en falso, dos palabras repetidas, cierre
+grabado dos veces) + pausas ≥ 0,7 s → 3:00, 22 clips. `listen` y una exportación real de Recordly
 (`RECORDLY_SMOKE_EXPORT_PROJECT`) confirman los cuatro errores fuera y ninguna palabra
 perdida. Sin DTW, dos de los cortes se llevaban la palabra anterior.

@@ -58,7 +58,9 @@ nuestros cambios encima. `rapid-captions` y `camera-fx` son las ramas histórica
   con Whisper + DTW, lista las frases con ids de palabra y aplica un plan de cortes
   (rangos de palabras con `expect`, pausas, muletillas) con la misma lógica de «Quitar
   pausas», escribiendo un proyecto aparte `<nombre> (Claude).recordly`; `listen`
-  vuelve a transcribir la línea de tiempo editada para verificar los cortes.
+  vuelve a transcribir la línea de tiempo editada para verificar los cortes. `timeline` y
+  `export --no-captions` alimentan los motion graphics; el criterio está en
+  `GUIA-ESTILO-VIDEO.md` y las instrucciones para Codex en `AGENTS.md`.
 
 ## Cómo se construye (Windows)
 

@@ -3,7 +3,7 @@ name: editar-video
 description: Editar una grabación de Recordly con Claude — transcribir, encontrar errores al hablar (tomas repetidas, arranques en falso, palabras duplicadas, pausas) y cortarlos en un proyecto aparte «(Claude)». Usar cuando Isaac pida editar, limpiar o recortar una grabación o «el video de hoy».
 ---
 
-Seguí `CLAUDE-EDIT.md` en la raíz de este repo: comandos de `npm run claude-edit`,
+Seguí `CLAUDE-EDIT.md` y `GUIA-ESTILO-VIDEO.md` (el criterio «exagerado»: densidad, subtítulos, catálogo de efectos, revisión) en la raíz de este repo: comandos de `npm run claude-edit`,
 formato del plan y las reglas de edición (leer todo, `expect` en cada corte,
 `--dry-run`, `apply`, `listen` para verificar, reportar a Isaac).
 
