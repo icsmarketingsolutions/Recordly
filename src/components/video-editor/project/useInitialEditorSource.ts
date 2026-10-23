@@ -7,6 +7,18 @@ import type { useProjectState } from "../state/useProjectState";
 import type { useTimelineState } from "../state/useTimelineState";
 import { DEFAULT_WEBCAM_TIME_OFFSET_MS } from "../types";
 
+type RecordingSessionChange = RendererRecordingSessionData;
+
+/** Windows paths may differ in slashes and drive-letter case between main and renderer. */
+function isSameMediaPath(left: string | null, right: string | null): boolean {
+	if (!left || !right) return false;
+	const comparable = (value: string) => {
+		const slashes = value.replace(/\\/g, "/");
+		return /^[a-z]:\//i.test(slashes) ? slashes.toLowerCase() : slashes;
+	};
+	return comparable(left) === comparable(right);
+}
+
 type SessionPresentation = {
 	hideOverlayCursorByDefault?: boolean;
 	nativeCaptureUnavailable?: boolean;
@@ -215,24 +227,43 @@ export function useInitialEditorSource({
 		smokeConfig,
 	]);
 
+	// A fresh recording opens the editor before its webcam file is written; the webcam
+	// arrives later as a session change. That event can land while the editor is still
+	// loading the video (no source path yet), so the last one is kept and applied once
+	// the source matches instead of being dropped — otherwise the camera never shows
+	// and saving then stores the project without it.
+	const lastSessionRef = useRef<RecordingSessionChange | null>(null);
+	const applySessionWebcam = (session: RecordingSessionChange, sourcePath: string | null) => {
+		const sessionSourcePath = session.videoPath ? fromFileUrl(session.videoPath) : null;
+		if (!isSameMediaPath(sessionSourcePath, sourcePath)) return false;
+		const webcamPath = session.webcamPath ? fromFileUrl(session.webcamPath) : null;
+		appearance.setWebcam((previous) => ({
+			...previous,
+			visibleRanges: undefined,
+			enabled: Boolean(webcamPath),
+			sourcePath: webcamPath,
+			timeOffsetMs: webcamPath
+				? (session.timeOffsetMs ?? previous.timeOffsetMs)
+				: DEFAULT_WEBCAM_TIME_OFFSET_MS,
+		}));
+		timeline.setSourceAudioFallbackRefreshKey((key) => key + 1);
+		return true;
+	};
+
 	useEffect(() => {
 		if (!window.electronAPI.onRecordingSessionChanged) return;
 		return window.electronAPI.onRecordingSessionChanged((session) => {
-			const sessionSourcePath = session?.videoPath ? fromFileUrl(session.videoPath) : null;
-			const webcamPath = session?.webcamPath ? fromFileUrl(session.webcamPath) : null;
-			if (!session || sessionSourcePath !== videoSourcePath) return;
-			appearance.setWebcam((previous) => ({
-				...previous,
-				visibleRanges: undefined,
-				enabled: Boolean(webcamPath),
-				sourcePath: webcamPath,
-				timeOffsetMs: webcamPath
-					? (session.timeOffsetMs ?? previous.timeOffsetMs)
-					: DEFAULT_WEBCAM_TIME_OFFSET_MS,
-			}));
-			timeline.setSourceAudioFallbackRefreshKey((key) => key + 1);
+			if (!session) return;
+			lastSessionRef.current = session;
+			if (applySessionWebcam(session, videoSourcePath)) lastSessionRef.current = null;
 		});
 	}, [videoSourcePath, appearance.setWebcam, timeline.setSourceAudioFallbackRefreshKey]);
+
+	useEffect(() => {
+		const pending = lastSessionRef.current;
+		if (!pending?.webcamPath || appearance.webcam.sourcePath) return;
+		if (applySessionWebcam(pending, videoSourcePath)) lastSessionRef.current = null;
+	}, [videoSourcePath]);
 
 	useEffect(() => {
 		let cancelled = false;

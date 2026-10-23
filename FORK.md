@@ -52,6 +52,15 @@ nuestros cambios encima. `rapid-captions` y `camera-fx` son las ramas histórica
   Ctrl/Cmd+Shift+S detener, +P pausar/reanudar, +R volver a grabar, +X cancelar.
   Se registran solo durante la grabación. La HUD reabre en el monitor al que se la
   arrastró por última vez (`hudOverlayDisplayId` en `app-settings.json`).
+- **La cámara ya no se pierde en el editor**: al terminar de grabar el editor abre sin
+  cámara y la recibe después (aviso `recording-session-changed`). Si ese aviso llegaba
+  mientras el editor aún cargaba el video, o con la ruta escrita distinto (mayúsculas o
+  barras en Windows), se descartaba; y si se guardaba así, el proyecto quedaba sin cámara
+  para siempre porque al reabrir ganaba la cámara vacía del proyecto. Ahora el último
+  aviso se guarda y se aplica cuando el video coincide (`useInitialEditorSource`), y al
+  abrir un proyecto sin cámara se recupera la que enlaza el manifiesto de la grabación
+  (`manifestWebcamPath` de `set-current-video-path`; una cámara quitada a mano borra
+  el manifiesto y no vuelve).
 - **Sin cuenta obligatoria**: grabar y guardar nunca piden iniciar sesión; el onboarding
   del upstream solo se abre a pedido y siempre se puede cerrar.
 - **Edición con Claude** (`npm run claude-edit`, `CLAUDE-EDIT.md`): CLI que transcribe

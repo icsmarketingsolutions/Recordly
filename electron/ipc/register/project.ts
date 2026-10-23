@@ -32,7 +32,11 @@ import {
 	saveProjectThumbnail,
 	saveRecentProjectPaths,
 } from "../project/manager";
-import { persistRecordingSessionManifest, resolveRecordingSession } from "../project/session";
+import {
+	persistRecordingSessionManifest,
+	resolveRecordingSession,
+	resolveRecordingSessionManifest,
+} from "../project/session";
 import {
 	getEditorContext,
 	setCurrentProjectPath,
@@ -826,11 +830,15 @@ export function registerProjectHandlers() {
 			const nextVideoPath = normalizeVideoSourcePath(path) ?? path;
 			setCurrentVideoPath(nextVideoPath, event.sender);
 			approveUserPath(nextVideoPath);
-			const resolvedSession = (await resolveRecordingSession(nextVideoPath)) ?? {
-				videoPath: nextVideoPath,
-				webcamPath: null,
-				timeOffsetMs: 0,
-			};
+			// The manifest is an explicit link (written when the webcam was finalized and
+			// removed when the user clears it), unlike the file-name guess below it.
+			const manifestSession = await resolveRecordingSessionManifest(nextVideoPath);
+			const resolvedSession = manifestSession ??
+				(await resolveRecordingSession(nextVideoPath)) ?? {
+					videoPath: nextVideoPath,
+					webcamPath: null,
+					timeOffsetMs: 0,
+				};
 
 			const nextSession = {
 				...resolvedSession,
@@ -859,7 +867,12 @@ export function registerProjectHandlers() {
 				}
 			}
 
-			return { success: true, webcamPath: nextSession.webcamPath ?? null };
+			return {
+				success: true,
+				webcamPath: nextSession.webcamPath ?? null,
+				manifestWebcamPath: manifestSession?.webcamPath ?? null,
+				timeOffsetMs: resolvedSession.timeOffsetMs ?? 0,
+			};
 		},
 	);
 

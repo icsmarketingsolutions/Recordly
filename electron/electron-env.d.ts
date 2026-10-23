@@ -773,7 +773,13 @@ interface Window {
 				preserveProjectPath?: boolean;
 				hideOverlayCursorByDefault?: boolean;
 			},
-		) => Promise<{ success: boolean; webcamPath: string | null }>;
+		) => Promise<{
+			success: boolean;
+			webcamPath: string | null;
+			/** Webcam linked by the recording's session manifest (not a file-name guess). */
+			manifestWebcamPath?: string | null;
+			timeOffsetMs?: number;
+		}>;
 		setCurrentRecordingSession: (
 			session: {
 				videoPath: string;

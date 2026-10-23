@@ -105,6 +105,7 @@ export function useProjectLifecycle(input: Input) {
 		project.setError(null);
 
 		refs.pendingFreshRecordingAutoZoomPathRef.current = null;
+		let webcam = editor.webcam;
 		if (editor.webcam.sourcePath) {
 			const result = await window.electronAPI.setCurrentRecordingSession?.(
 				{
@@ -123,6 +124,17 @@ export function useProjectLifecycle(input: Input) {
 			});
 			if (!result.success) throw new Error("Could not load project media");
 			current.applySessionPresentation(null);
+			// Saved before the recording's webcam finished writing: the project has no
+			// camera, but the recording's manifest still links it. Recover it instead of
+			// losing the camera for good. A camera the user removed has no manifest.
+			if (result.manifestWebcamPath) {
+				webcam = {
+					...editor.webcam,
+					enabled: true,
+					sourcePath: result.manifestWebcamPath,
+					timeOffsetMs: result.timeOffsetMs ?? editor.webcam.timeOffsetMs,
+				};
+			}
 		}
 		const videoUrl = await resolveVideoUrl(sourcePath);
 		project.setVideoSourcePath(sourcePath);
@@ -168,7 +180,7 @@ export function useProjectLifecycle(input: Input) {
 		appearance.setBorderRadius(editor.borderRadius);
 		appearance.setPadding(editor.padding);
 		appearance.setCropRegion(editor.cropRegion);
-		appearance.setWebcam(editor.webcam);
+		appearance.setWebcam(webcam);
 		timeline.setZoomRegions(editor.zoomRegions);
 		timeline.setTrimRegions(editor.trimRegions);
 		timeline.setClipRegions(editor.clipRegions);
