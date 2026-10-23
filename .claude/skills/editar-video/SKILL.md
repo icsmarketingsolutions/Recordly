@@ -11,3 +11,5 @@ formato del plan y las reglas de edición (leer todo, `expect` en cada corte,
   fecha de modificación más reciente (preguntar si hay duda).
 - Nunca sobrescribir el original (sin `--in-place` salvo pedido explícito).
 - Los planes van al scratchpad de la sesión, no al repo.
+- Fase 2 (motion graphics, «estilo MrBeast», subtítulos animados): `timeline` + `export --no-captions`
+  y luego `_videos-brag/_motor/sobrevideo.mjs` según `_videos-brag/_motor/SOBREVIDEO.md`.

@@ -40,6 +40,13 @@ npm run -s claude-edit -- frame       "<proyecto>.recordly" --at 1:23.4
 - **listen**: arma el audio de la línea de tiempo editada y lo transcribe de nuevo:
   es la verificación de los cortes sin exportar el video.
 
+## Fase 2: motion graphics
+
+`timeline` (palabras en tiempo del video editado) y `export --no-captions` (Recordly
+renderiza el proyecto en un perfil aparte, sin sus subtítulos) alimentan
+`_videos-brag/_motor/sobrevideo.mjs`, que pone encima subtítulos dinámicos, títulos,
+llamadas, cifras, golpes de zoom, SFX y música. Ver `_videos-brag/_motor/SOBREVIDEO.md`.
+
 ## El plan
 
 ```json

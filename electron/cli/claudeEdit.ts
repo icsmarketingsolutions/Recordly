@@ -963,6 +963,99 @@ async function commandListen(projectPath: string, flags: Record<string, string |
 	}
 }
 
+/**
+ * The words as they land in the edited video (timeline ms), for motion graphics laid
+ * over the export. Words the cuts removed are left out.
+ */
+async function commandTimeline(projectPath: string, flags: Record<string, string | true>) {
+	const project = await readProject(projectPath);
+	const transcript = await loadTranscript(project, projectPath);
+	const clips = getClips(project, transcript.sourceDurationMs);
+	const words: Array<{ text: string; startMs: number; endMs: number }> = [];
+	for (const word of wordsOf(transcript)) {
+		if (keptFraction(clips, word.startMs, word.endMs) < 0.5) continue;
+		const start = toTimelineMs(clips, word.startMs) ?? toTimelineMs(clips, word.endMs - 1);
+		if (start === null) continue;
+		const end = toTimelineMs(clips, word.endMs - 1) ?? start + (word.endMs - word.startMs);
+		words.push({ text: word.text, startMs: start, endMs: Math.max(start + 1, end) });
+	}
+	const durationMs = clips.reduce((total, clip) => Math.max(total, clip.endMs), 0);
+	const json = JSON.stringify({ project: projectPath, durationMs, words }, null, 1);
+	const out = flagString(flags, "out");
+	if (out) {
+		await fs.writeFile(out, json);
+		console.log(`${words.length} words, ${formatTime(durationMs)} → ${out}`);
+	} else console.log(json);
+}
+
+/** The packaged fork first, then the installed app. */
+function findRecordlyExe(): string {
+	const candidates = [
+		process.env.RECORDLY_EXE,
+		path.join(process.cwd(), "..", "Recordly-Nuevo", "Recordly.exe"),
+		process.env.LOCALAPPDATA &&
+			path.join(process.env.LOCALAPPDATA, "Programs", "Recordly", "Recordly.exe"),
+	].filter((value): value is string => Boolean(value));
+	const found = candidates.find((candidate) => existsSync(candidate));
+	if (!found) fail("no Recordly.exe found; set RECORDLY_EXE");
+	return found;
+}
+
+/**
+ * Export the project with Recordly itself (its smoke-export mode, in a throwaway
+ * profile so the user's open app is untouched). `--no-captions` renders without the
+ * project's captions, for footage that gets its own animated captions later.
+ */
+async function commandExport(projectPath: string, flags: Record<string, string | true>) {
+	const out = flagString(flags, "out");
+	if (!out) fail("export needs --out <file.mp4>");
+	const quality = flagString(flags, "quality") ?? "source";
+	if (!["medium", "good", "high", "source"].includes(quality))
+		fail(`quality must be medium, good, high or source`);
+	const project = await readProject(projectPath);
+	const dir = workDir(project, projectPath);
+	await fs.mkdir(dir, { recursive: true });
+	let exportPath = projectPath;
+	if (flags["no-captions"]) {
+		const settings = (project.editor.autoCaptionSettings ?? {}) as Record<string, unknown>;
+		const copy: Project = {
+			...project,
+			editor: {
+				...project.editor,
+				autoCaptionSettings: { ...settings, enabled: false },
+				autoCaptions: [],
+			},
+		};
+		exportPath = path.join(dir, "export-no-captions.recordly");
+		await fs.writeFile(exportPath, JSON.stringify(copy));
+	}
+	const outPath = path.resolve(out);
+	await fs.rm(outPath, { force: true });
+	const started = Date.now();
+	const { stdout, stderr } = await execFileAsync(
+		findRecordlyExe(),
+		[`--user-data-dir=${path.join(dir, "export-profile")}`],
+		{
+			...EXEC_OPTIONS,
+			env: {
+				...process.env,
+				RECORDLY_SMOKE_EXPORT: "1",
+				RECORDLY_SMOKE_EXPORT_PROJECT: exportPath,
+				RECORDLY_SMOKE_EXPORT_OUTPUT: outPath,
+				RECORDLY_SMOKE_EXPORT_QUALITY: quality,
+			},
+		},
+	);
+	if (!existsSync(outPath)) {
+		const log = `${stdout}\n${stderr}`.split(/\r?\n/).filter((line) => /smoke|error/i.test(line));
+		fail(`Recordly finished without writing the export:\n${log.slice(-15).join("\n")}`);
+	}
+	const durationMs = await probeDurationMs(findFfmpeg(), outPath);
+	console.log(
+		`exported ${formatTime(durationMs)} in ${((Date.now() - started) / 1000).toFixed(0)} s → ${outPath}`,
+	);
+}
+
 async function commandFrame(projectPath: string, flags: Record<string, string | true>) {
 	const project = await readProject(projectPath);
 	const at = flagString(flags, "at");
@@ -998,6 +1091,8 @@ const USAGE = `usage: npm run claude-edit -- <command> <project.recordly> [optio
   transcript   phrases with word ids in source time  (--pause 700, --words 120-135, --json)
   apply        --plan plan.json  [--dry-run] [--out file] [--in-place]
   listen       transcribe the edited timeline again, to hear what the cuts left (--lang es)
+  timeline     words in edited-video time, for motion graphics  (--out words.json)
+  export       Recordly renders the project  --out file.mp4 [--quality source] [--no-captions]
   frame        --at 1:23.4  [--out file.png]   still from the recording, source time`;
 
 async function main() {
@@ -1019,6 +1114,10 @@ async function main() {
 			return commandTranscript(resolved, flags);
 		case "apply":
 			return commandApply(resolved, flags);
+		case "timeline":
+			return commandTimeline(resolved, flags);
+		case "export":
+			return commandExport(resolved, flags);
 		case "listen":
 			return commandListen(resolved, flags);
 		case "frame":
