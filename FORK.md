@@ -61,6 +61,12 @@ nuestros cambios encima. `rapid-captions` y `camera-fx` son las ramas histórica
   abrir un proyecto sin cámara se recupera la que enlaza el manifiesto de la grabación
   (`manifestWebcamPath` de `set-current-video-path`; una cámara quitada a mano borra
   el manifiesto y no vuelve).
+- **La cámara graba en 1080p30** (antes salía 640×360): Chromium abre una sola sesión por
+  cámara y el primero que la abre fija el modo. La vista previa del HUD pedía 320×320 y
+  abría antes que la grabación, así que la grabación recibía 640×360 aunque pidiera 720p.
+  Ahora la vista previa y la grabación piden lo mismo (`src/lib/webcamCapture.ts`:
+  1920×1080 a 30 fps, 12 Mbps) y la vista previa solo lo muestra chico. Probado con
+  `scripts/e2e/e2e-webcam-quality.mjs` (graba 8 s y mide el archivo de la cámara).
 - **Sin cuenta obligatoria**: grabar y guardar nunca piden iniciar sesión; el onboarding
   del upstream solo se abre a pedido y siempre se puede cerrar.
 - **Edición con Claude** (`npm run claude-edit`, `CLAUDE-EDIT.md`): CLI que transcribe

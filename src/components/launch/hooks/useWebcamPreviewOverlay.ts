@@ -1,4 +1,5 @@
 import { type PointerEvent, useCallback, useEffect, useRef, useState } from "react";
+import { webcamVideoConstraints } from "@/lib/webcamCapture";
 import {
 	canShowFloatingWebcamPreview,
 	DEFAULT_WEBCAM_PREVIEW_SIZE,
@@ -354,19 +355,9 @@ export function useWebcamPreviewOverlay({
 			}
 
 			try {
+				// Same mode as the recorder: the first stream fixes the camera's mode (webcamCapture.ts).
 				const previewStream = await navigator.mediaDevices.getUserMedia({
-					video: webcamDeviceId
-						? {
-								deviceId: { exact: webcamDeviceId },
-								width: { ideal: 320 },
-								height: { ideal: 320 },
-								frameRate: { ideal: 24, max: 30 },
-							}
-						: {
-								width: { ideal: 320 },
-								height: { ideal: 320 },
-								frameRate: { ideal: 24, max: 30 },
-							},
+					video: webcamVideoConstraints(webcamDeviceId),
 					audio: false,
 				});
 
