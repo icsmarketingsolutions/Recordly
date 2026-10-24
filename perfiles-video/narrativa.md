@@ -71,7 +71,7 @@ Un video de 3–4 min lleva 6–10 escenas.
 
 ## 6. Referencia
 
-Prueba del 23-oct-2026: primeros 112 s del video de pasarelas de pago de Tours Tico
+**APROBADA por Isaac (23-oct-2026: «me gusta, dejalo así»)**: primeros 112 s del video de pasarelas de pago de Tours Tico
 (5 escenas: cómo se cobra una reserva, un sistema/cinco pasarelas, dentro o fuera de tu web,
 la recomendada, el cliente elige). El plan está fuera del repo, en
 `_videos-brag/sobrevideo/tours-pasarelas-narrativa/escenas.json`: copiar de ahí la forma de cada escena.
