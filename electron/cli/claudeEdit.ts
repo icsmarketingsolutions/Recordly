@@ -1105,12 +1105,17 @@ async function commandWebcam(projectPath: string, flags: Record<string, string |
 		.join(",");
 	// Same mapping as the editor: webcam media time = source time − offset. Before the
 	// webcam started (negative times) the first frame is held.
+	// One seeked input per clip: trimming a single shared [0:v] makes FFmpeg buffer every
+	// decoded frame the later clips need while concat drains the earlier ones (tens of GB
+	// on a long recording, enough to freeze Windows).
+	const inputs: string[] = [];
 	const graph = clips
 		.map((clip, index) => {
 			const start = Math.max(0, getClipSourceStartMs(clip) / 1000 - offsetS);
 			const end = Math.max(start + 0.001, getClipSourceEndMs(clip) / 1000 - offsetS);
 			const speed = clip.speed > 0 ? clip.speed : 1;
-			return `[0:v]trim=${start.toFixed(3)}:${end.toFixed(3)},setpts=(PTS-STARTPTS)/${speed}[v${index}]`;
+			inputs.push("-ss", start.toFixed(3), "-t", (end - start).toFixed(3), "-i", webcamPath);
+			return `[${index}:v]setpts=(PTS-STARTPTS)/${speed}[v${index}]`;
 		})
 		.join(";");
 	const concat = `${clips.map((_, index) => `[v${index}]`).join("")}concat=n=${clips.length}:v=1:a=0,fps=${fps}${look ? `,${look}` : ""}[out]`;
@@ -1125,8 +1130,7 @@ async function commandWebcam(projectPath: string, flags: Record<string, string |
 			"-y",
 			"-loglevel",
 			"error",
-			"-i",
-			webcamPath,
+			...inputs,
 			"-filter_complex_script",
 			graphPath,
 			"-map",
