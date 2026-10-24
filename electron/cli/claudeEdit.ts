@@ -52,6 +52,11 @@ const DETECT_MIN_S = 0.3;
 const WORD_CUT_REACH_MS = 200;
 /** Loudness is measured in steps of this length (160 samples at 16 kHz). */
 const ENVELOPE_STEP_MS = 10;
+/** Picture motion is sampled this often to choose what part of a long pause to keep. */
+const MOTION_STEP_MS = 200;
+/** Words and spellings Whisper should expect (Costa Rican Spanish), shared by every profile. */
+const VOCABULARY_FILE = path.join(process.cwd(), "perfiles-video", "vocabulario.json");
+const PROJECTS_DIR = path.join(USER_DATA, "recordings", "Projects");
 
 type Project = {
 	version: number;
@@ -93,8 +98,12 @@ type CutSpec = {
 
 type EditPlan = {
 	cuts?: CutSpec[];
-	/** `false` keeps pauses; otherwise the "Remove pauses" settings. */
-	pauses?: false | { minMs?: number; padMs?: number };
+	/**
+	 * `false` keeps pauses; otherwise the "Remove pauses" settings. With `keepMs`, a pause
+	 * of `minMs` or more is shortened to `keepMs` (plus padding) instead of removed: the
+	 * kept stretch is where the video moves most (gameplay), so quiet, still parts go.
+	 */
+	pauses?: false | { minMs?: number; padMs?: number; keepMs?: number };
 	/** `true` for the built-in list, or extra words to treat as fillers. */
 	fillers?: boolean | string[];
 	/** Store the transcript as the project's captions when it has none. */
@@ -218,11 +227,23 @@ async function probeDurationMs(ffmpeg: string, file: string): Promise<number> {
 	return Math.round((Number(match[1]) * 3600 + Number(match[2]) * 60 + Number(match[3])) * 1000);
 }
 
+/** How many audio streams a file has (an OBS recording can carry one per mixer track). */
+async function countAudioStreams(ffmpeg: string, file: string): Promise<number> {
+	const { stderr } = await execFileAsync(
+		ffmpeg,
+		["-hide_banner", "-i", file],
+		EXEC_OPTIONS,
+	).catch((error: { stderr?: string }) => ({ stderr: error.stderr ?? "" }));
+	return (stderr.match(/Stream #\d+:\d+[^:]*: Audio/g) ?? []).length;
+}
+
 /**
  * Speech audio in source time: the microphone sidecar (shifted by its recorded start
- * delay) when the recording has one, otherwise the recording's own audio track.
+ * delay) when the recording has one, otherwise the recording's own audio track
+ * (`track`, 0-based, when it has several: the voice alone finds real pauses even with
+ * game music underneath).
  */
-async function extractSpeechWav(ffmpeg: string, videoPath: string, wavPath: string) {
+async function extractSpeechWav(ffmpeg: string, videoPath: string, wavPath: string, track = 0) {
 	const micPath = videoPath.replace(/\.mp4$/i, ".mic.wav");
 	if (micPath !== videoPath && existsSync(micPath)) {
 		let delayMs = 0;
@@ -264,7 +285,7 @@ async function extractSpeechWav(ffmpeg: string, videoPath: string, wavPath: stri
 			"-i",
 			videoPath,
 			"-map",
-			"0:a:0",
+			`0:a:${track}`,
 			"-vn",
 			"-ac",
 			"1",
@@ -276,7 +297,73 @@ async function extractSpeechWav(ffmpeg: string, videoPath: string, wavPath: stri
 		],
 		EXEC_OPTIONS,
 	);
-	return "recording audio track";
+	return track > 0 ? `recording audio track ${track + 1}` : "recording audio track";
+}
+
+/**
+ * How much the picture changes, one value per `MOTION_STEP_MS` (mean luma difference
+ * between samples, 0–255). Cached: decoding a long recording takes a while.
+ */
+async function measureMotion(ffmpeg: string, videoPath: string, dir: string): Promise<number[]> {
+	const cache = path.join(dir, "motion.json");
+	if (existsSync(cache)) {
+		const saved = JSON.parse(await fs.readFile(cache, "utf8")) as {
+			videoPath: string;
+			values: number[];
+		};
+		if (saved.videoPath === videoPath) return saved.values;
+	}
+	// Same relative-file trick as measureEnvelope: a drive colon breaks the filter text.
+	await execFileAsync(
+		ffmpeg,
+		[
+			"-hide_banner",
+			"-nostats",
+			"-i",
+			videoPath,
+			"-an",
+			"-vf",
+			`fps=${1000 / MOTION_STEP_MS},scale=160:-2,format=gray,tblend=all_mode=difference,signalstats,metadata=print:key=lavfi.signalstats.YAVG:file=motion.txt`,
+			"-f",
+			"null",
+			"-",
+		],
+		{ ...EXEC_OPTIONS, cwd: dir },
+	);
+	const text = await fs.readFile(path.join(dir, "motion.txt"), "utf8");
+	await fs.rm(path.join(dir, "motion.txt"), { force: true });
+	const values = [...text.matchAll(/YAVG=(\S+)/g)].map((match) => {
+		const value = Number(match[1]);
+		return Number.isFinite(value) ? Math.round(value * 10) / 10 : 0;
+	});
+	await fs.writeFile(cache, JSON.stringify({ videoPath, values }));
+	return values;
+}
+
+/** The `keepMs` stretch of [startMs, endMs] where the picture moves most. */
+function busiestWindow(motion: number[], startMs: number, endMs: number, keepMs: number) {
+	const first = Math.floor(startMs / MOTION_STEP_MS);
+	const width = Math.max(1, Math.round(keepMs / MOTION_STEP_MS));
+	const last = Math.max(first, Math.floor((endMs - keepMs) / MOTION_STEP_MS));
+	let best = first;
+	let bestSum = -1;
+	for (let index = first; index <= last; index++) {
+		let sum = 0;
+		for (let step = index; step < index + width; step++) sum += motion[step] ?? 0;
+		if (sum > bestSum) {
+			bestSum = sum;
+			best = index;
+		}
+	}
+	const windowStart = Math.min(Math.max(startMs, best * MOTION_STEP_MS), endMs - keepMs);
+	return { startMs: windowStart, endMs: windowStart + keepMs };
+}
+
+type Vocabulary = { whisperPrompt?: string; correcciones?: Array<[string, string]> };
+
+async function readVocabulary(): Promise<Vocabulary> {
+	if (!existsSync(VOCABULARY_FILE)) return {};
+	return JSON.parse(await fs.readFile(VOCABULARY_FILE, "utf8")) as Vocabulary;
 }
 
 async function detectSilences(ffmpeg: string, wavPath: string, noiseDb = NOISE_DB) {
@@ -615,7 +702,25 @@ async function commandTranscribe(projectPath: string, flags: Record<string, stri
 	const ffmpeg = findFfmpeg();
 	const sourceDurationMs = await probeDurationMs(ffmpeg, project.videoPath);
 	const wavPath = path.join(dir, "speech.wav");
-	const audioSource = await extractSpeechWav(ffmpeg, project.videoPath, wavPath);
+	// Several audio tracks (OBS): the voice is the one named by --track (1-based, as OBS
+	// numbers them), else the one `import` chose, else the last track.
+	const audioStreams = await countAudioStreams(ffmpeg, project.videoPath);
+	const imported = existsSync(path.join(dir, "source.json"))
+		? (JSON.parse(await fs.readFile(path.join(dir, "source.json"), "utf8")) as {
+				speechTrack?: number;
+			})
+		: {};
+	const trackFlag = flagString(flags, "track");
+	const speechTrack = trackFlag
+		? Number(trackFlag) - 1
+		: (imported.speechTrack ?? Math.max(0, audioStreams - 1));
+	if (
+		!Number.isInteger(speechTrack) ||
+		speechTrack < 0 ||
+		speechTrack >= Math.max(1, audioStreams)
+	)
+		fail(`--track must be 1–${audioStreams}`);
+	const audioSource = await extractSpeechWav(ffmpeg, project.videoPath, wavPath, speechTrack);
 	const silences = await detectSilences(ffmpeg, wavPath);
 	const envelopeDb = await measureEnvelope(ffmpeg, wavPath, dir);
 
@@ -630,9 +735,13 @@ async function commandTranscribe(projectPath: string, flags: Record<string, stri
 		const whisper = findWhisper();
 		const model = await findWhisperModel(flagString(flags, "model"));
 		const language = flagString(flags, "lang") ?? "auto";
-		const prompt =
+		const names =
 			flagString(flags, "prompt") ??
 			(project.editor.autoCaptionSettings as { glossary?: string } | undefined)?.glossary;
+		// The shared vocabulary goes last: Whisper weighs the end of the prompt most, and
+		// the names of this one video fit before it.
+		const vocabulary = flags["no-vocab"] ? "" : ((await readVocabulary()).whisperPrompt ?? "");
+		const prompt = [names, vocabulary].filter((part) => part?.trim()).join(" ");
 		const outputBase = path.join(dir, "whisper");
 		const started = Date.now();
 		console.log(
@@ -647,7 +756,7 @@ async function commandTranscribe(projectPath: string, flags: Record<string, stri
 			outputBase,
 			"-l",
 			language,
-			...(prompt?.trim() ? ["--prompt", prompt.trim().slice(0, 1000)] : []),
+			...(prompt.trim() ? ["--prompt", prompt.trim().slice(-1000)] : []),
 			"-np",
 			"-mc",
 			"0",
@@ -793,7 +902,31 @@ async function commandApply(projectPath: string, flags: Record<string, string | 
 	}
 	const pauses =
 		plan.pauses === false ? null : { minMs: 1000, padMs: 150, ...(plan.pauses ?? {}) };
-	if (pauses) {
+	let shortened = 0;
+	if (pauses?.keepMs !== undefined) {
+		// Long pauses keep only their busiest `keepMs` (padding protects the speech on
+		// both sides); shorter ones stay. Cut as fillers so the planner takes them whole.
+		const ffmpeg = findFfmpeg();
+		const motion = await measureMotion(
+			ffmpeg,
+			project.videoPath,
+			workDir(project, projectPath),
+		);
+		for (const silence of transcript.silences) {
+			const endMs = Number.isFinite(silence.endMs)
+				? silence.endMs
+				: transcript.sourceDurationMs;
+			if (endMs - silence.startMs < pauses.minMs) continue;
+			const inner = { startMs: silence.startMs + pauses.padMs, endMs: endMs - pauses.padMs };
+			if (inner.endMs - inner.startMs <= pauses.keepMs) continue;
+			const keep = busiestWindow(motion, inner.startMs, inner.endMs, pauses.keepMs);
+			if (keep.startMs > inner.startMs)
+				spans.push({ startMs: inner.startMs, endMs: keep.startMs, kind: "filler" });
+			if (keep.endMs < inner.endMs)
+				spans.push({ startMs: keep.endMs, endMs: inner.endMs, kind: "filler" });
+			shortened++;
+		}
+	} else if (pauses) {
 		spans.push(
 			...transcript.silences.map((silence) => ({
 				startMs: silence.startMs,
@@ -814,7 +947,11 @@ async function commandApply(projectPath: string, flags: Record<string, string | 
 
 	console.log(`cuts:`);
 	for (const line of report) console.log(line);
-	if (pauses) console.log(`  ✂ pauses ≥ ${pauses.minMs} ms (pad ${pauses.padMs} ms)`);
+	if (pauses?.keepMs !== undefined)
+		console.log(
+			`  ✂ ${shortened} pauses ≥ ${pauses.minMs} ms shortened to their busiest ${pauses.keepMs} ms (pad ${pauses.padMs} ms)`,
+		);
+	else if (pauses) console.log(`  ✂ pauses ≥ ${pauses.minMs} ms (pad ${pauses.padMs} ms)`);
 	console.log(
 		`removed     ${result.removedCount} pieces, ${(result.removedMs / 1000).toFixed(1)} s of source`,
 	);
@@ -1023,7 +1160,8 @@ async function commandExport(projectPath: string, flags: Record<string, string |
 			editor.autoCaptionSettings = { ...settings, enabled: false };
 			editor.autoCaptions = [];
 		}
-		if (flags["no-webcam"]) editor.webcam = { ...((editor.webcam ?? {}) as object), enabled: false };
+		if (flags["no-webcam"])
+			editor.webcam = { ...((editor.webcam ?? {}) as object), enabled: false };
 		exportPath = path.join(dir, "export-copy.recordly");
 		await fs.writeFile(exportPath, JSON.stringify({ ...project, editor }));
 	}
@@ -1045,7 +1183,9 @@ async function commandExport(projectPath: string, flags: Record<string, string |
 		},
 	);
 	if (!existsSync(outPath)) {
-		const log = `${stdout}\n${stderr}`.split(/\r?\n/).filter((line) => /smoke|error/i.test(line));
+		const log = `${stdout}\n${stderr}`
+			.split(/\r?\n/)
+			.filter((line) => /smoke|error/i.test(line));
 		fail(`Recordly finished without writing the export:\n${log.slice(-15).join("\n")}`);
 	}
 	const durationMs = await probeDurationMs(findFfmpeg(), outPath);
@@ -1071,7 +1211,8 @@ async function findWebcamPath(project: Project): Promise<string> {
 			webcamFileName?: string;
 		};
 		const candidate =
-			session.webcamFileName && path.join(path.dirname(project.videoPath), session.webcamFileName);
+			session.webcamFileName &&
+			path.join(path.dirname(project.videoPath), session.webcamFileName);
 		if (candidate && existsSync(candidate)) return candidate;
 	}
 	fail("this project has no webcam recording");
@@ -1179,11 +1320,69 @@ async function commandFrame(projectPath: string, flags: Record<string, string | 
 	console.log(out);
 }
 
+/**
+ * A Recordly project around a recording made elsewhere (OBS): the video, optionally a
+ * separate webcam file, no cursor or frame. Recordly fills in the rest of the editor
+ * settings when it opens the project.
+ */
+async function commandImport(videoPath: string, flags: Record<string, string | true>) {
+	const ffmpeg = findFfmpeg();
+	const durationMs = await probeDurationMs(ffmpeg, videoPath);
+	const webcamFlag = flagString(flags, "webcam");
+	const webcamPath = webcamFlag ? path.resolve(webcamFlag) : null;
+	if (webcamPath && !existsSync(webcamPath)) fail(`webcam not found: ${webcamPath}`);
+	const audioStreams = await countAudioStreams(ffmpeg, videoPath);
+	const trackFlag = flagString(flags, "track");
+	const speechTrack = trackFlag ? Number(trackFlag) - 1 : Math.max(0, audioStreams - 1);
+	if (
+		!Number.isInteger(speechTrack) ||
+		speechTrack < 0 ||
+		speechTrack >= Math.max(1, audioStreams)
+	)
+		fail(`--track must be 1–${audioStreams}`);
+	const name = flagString(flags, "name") ?? path.basename(videoPath, path.extname(videoPath));
+	const outPath = path.join(PROJECTS_DIR, `${name.replace(/[<>:"/\\|?*]+/g, "-")}.recordly`);
+	if (existsSync(outPath) && !flags.force)
+		fail(`${outPath} already exists (use --force to replace it)`);
+	const project: Project = {
+		version: 2,
+		projectId: randomUUID(),
+		videoPath,
+		editor: {
+			showCursor: false,
+			shadowIntensity: 0,
+			padding: { top: 0, bottom: 0, left: 0, right: 0, linked: true },
+			webcam: webcamPath
+				? { enabled: true, sourcePath: webcamPath, mirror: false }
+				: { enabled: false, sourcePath: null },
+			clipRegions: [{ id: "clip-1", startMs: 0, endMs: durationMs, speed: 1 }],
+			zoomRegions: [],
+			annotationRegions: [],
+			audioRegions: [],
+			autoCaptions: [],
+		},
+	};
+	await fs.mkdir(PROJECTS_DIR, { recursive: true });
+	await fs.writeFile(outPath, `${JSON.stringify(project, null, 2)}\n`);
+	const dir = workDir(project, outPath);
+	await fs.mkdir(dir, { recursive: true });
+	await fs.writeFile(path.join(dir, "source.json"), JSON.stringify({ speechTrack }));
+	await addToRecentProjects(outPath);
+	console.log(`video       ${videoPath} (${formatTime(durationMs)})`);
+	console.log(`webcam      ${webcamPath ?? "none"}`);
+	console.log(
+		`voice       audio track ${speechTrack + 1} of ${audioStreams}${trackFlag ? "" : " (the last one; --track N to pick another)"}`,
+	);
+	console.log(`saved       ${outPath}`);
+}
+
 const USAGE = `usage: npm run claude-edit -- <command> <project.recordly> [options]
 
+  import       <video.mp4> [--webcam cam.mp4] [--name "Name"] [--track N] [--force]
+               a project from an OBS recording (--track = the voice's audio track, 1-based)
   info         clips, durations and whether a transcript exists
   transcribe   speech → words with timings (Whisper, GPU when available)
-               --lang es  --model <ggml file>  --prompt "names"  --force  --whisper
+               --lang es  --model <ggml file>  --prompt "names"  --track N  --no-vocab  --force  --whisper
   transcript   phrases with word ids in source time  (--pause 700, --words 120-135, --json)
   apply        --plan plan.json  [--dry-run] [--out file] [--in-place]
   listen       transcribe the edited timeline again, to hear what the cuts left (--lang es)
@@ -1203,6 +1402,8 @@ async function main() {
 	const resolved = path.resolve(projectPath);
 	if (!existsSync(resolved)) fail(`not found: ${resolved}`);
 	switch (command) {
+		case "import":
+			return commandImport(resolved, flags);
 		case "info":
 			return commandInfo(resolved);
 		case "transcribe":

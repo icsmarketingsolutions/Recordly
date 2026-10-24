@@ -24,6 +24,7 @@ Leer en este orden y seguirlos al pie de la letra:
 Resumen de comandos (desde esta carpeta, Windows, Git Bash o PowerShell):
 
 ```bash
+npm run -s claude-edit -- import      "<obs>.mp4" --webcam "<cámara>.mp4" --name "<p>"   # grabaciones de OBS
 npm run -s claude-edit -- info        "<p>.recordly"
 npm run -s claude-edit -- transcribe  "<p>.recordly" --lang es
 npm run -s claude-edit -- transcript  "<p>.recordly"

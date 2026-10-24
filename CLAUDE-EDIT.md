@@ -15,6 +15,7 @@ Desde `Recordly/source`, con la ruta del proyecto (los proyectos viven en
 `%APPDATA%\Recordly\recordings\Projects\`):
 
 ```bash
+npm run -s claude-edit -- import      "<grabación OBS>.mp4" --webcam "<cámara>.mp4" --name "<nombre>"
 npm run -s claude-edit -- info        "<proyecto>.recordly"
 npm run -s claude-edit -- transcribe  "<proyecto>.recordly" --lang es
 npm run -s claude-edit -- transcript  "<proyecto>.recordly"
@@ -25,12 +26,19 @@ npm run -s claude-edit -- listen      "<proyecto> (Claude).recordly" --lang es
 npm run -s claude-edit -- frame       "<proyecto>.recordly" --at 1:23.4
 ```
 
+- **import** (grabaciones de OBS): `import "<video>.mp4" --webcam "<cámara>.mp4" --name
+  "<nombre>"` escribe `<nombre>.recordly` en la carpeta de proyectos, con la cámara aparte
+  y sin cursor ni marco. La voz sale de la **última pista de audio** (en el perfil de OBS
+  «Grabacion juego» la 3 es el micrófono); `--track N` elige otra. Así la música del
+  juego no tapa las pausas ni las palabras.
 - **transcribe**: micrófono (con su desfase) o la pista de la grabación → Whisper
   (la build CUDA de `%APPDATA%\Recordly\whisper-cuda` si está; ~13 s por 3,5 min) con
   **DTW** (`-dtw <modelo> -nfa`): los tiempos propios de Whisper se corren hasta medio
   segundo en habla rápida y cortaban la palabra de al lado. Guarda en
   `%APPDATA%\Recordly\claude-edit\<projectId>\` la transcripción, las pausas
-  (`silencedetect` −30 dB) y el volumen cada 10 ms. `--prompt` = glosario (nombres).
+  (`silencedetect` −30 dB) y el volumen cada 10 ms. `--prompt` = glosario (nombres); el
+  vocabulario tico de `perfiles-video/vocabulario.json` se agrega siempre (`--no-vocab` lo
+  quita). Con varias pistas de audio usa la que eligió `import` o la última (`--track N`).
 - **transcript**: frases con ids de palabra, en *tiempo de fuente* (no se mueve al
   cortar). `✂` ya cortado, `~` cortado en parte, `tl` = posición en la línea de tiempo.
 - **apply**: nunca toca el original; escribe `<proyecto> (Claude).recordly` (con `.bak`
@@ -74,12 +82,18 @@ Los efectos de cámara de Recordly (desenfoque de fondo, mirada) no van en ese a
   plan se rechaza (los ids cambian al volver a transcribir).
 - `pauses`: igual que «Quitar pausas» del editor; `false` las deja. `fillers`: «eh»,
   «em», «um»… enteros, más las palabras que se pasen en una lista.
+- `pauses.keepMs` (gameplays): en vez de borrar cada pausa de `minMs` o más, la deja en
+  `keepMs` (más el `padMs` de cada lado) quedándose con el tramo donde **más se mueve la
+  imagen**; lo quieto y callado se va. Recomendado para gaming:
+  `{ "minMs": 2500, "padMs": 400, "keepMs": 1500 }`. El movimiento se mide una vez
+  (`motion.json` en la carpeta de trabajo, ~2 min para 12 min de video).
 
 ## Reglas de edición (para Claude)
 
 1. `info` → `transcribe` → leer `transcript` completo antes de decidir nada.
 2. Buscar: **tomas repetidas** (la misma idea arrancada dos veces: queda la última
-   completa), **arranques en falso** («tiene que para, bueno…»), **palabras
+   completa; vale en **todos** los perfiles, también en gaming: una repetición solo se
+   deja si ella misma es el chiste), **arranques en falso** («tiene que para, bueno…»), **palabras
    duplicadas** («un sistema, un sistema»), **frases que se dicen dos veces con otras
    palabras**, muletillas largas («o sea, digamos, este…») y pausas. Lo que ya está `✂`
    no se vuelve a cortar.

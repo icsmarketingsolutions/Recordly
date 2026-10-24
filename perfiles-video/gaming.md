@@ -18,9 +18,14 @@ chiste o lo remata. Si no hace ninguna de las cuatro, se quita.
 ## 1. Flujo
 
 Igual que [exagerado.md](exagerado.md) §1, con la **cámara aparte** (este perfil vive de
-las tomas de cámara):
+las tomas de cámara). Si viene de OBS (perfil «Grabacion juego»: juego en `Videos\Juego`,
+cámara en `Videos\Camara`), primero `import`. En la fase 1 van **siempre** las
+repeticiones fuera y las pausas acortadas con
+`"pauses": { "minMs": 2500, "padMs": 400, "keepMs": 1500 }` (se queda lo más movido del
+gameplay; ver `CLAUDE-EDIT.md`).
 
 ```bash
+npm run -s claude-edit -- import   "<obs>.mp4" --webcam "<cámara>.mp4" --name "<p>"
 npm run -s claude-edit -- timeline "<p> (Claude).recordly" --out words.json
 npm run -s claude-edit -- export   "<p> (Claude).recordly" --out pantalla.mp4 --no-captions --no-webcam
 npm run -s claude-edit -- webcam   "<p> (Claude).recordly" --out cam.mp4

@@ -18,6 +18,27 @@ webcam` la cámara va aparte y el plan elige la toma (`esquina`, `completa`, `gr
 Si Isaac no dice cuál, preguntar. Un video puede llevar la **marca** de un producto
 (colores, fuentes, mascota) con cualquier perfil: va en `estilo` del plan.
 
+## Orden de trabajo (todos los perfiles)
+
+1. **Recortes primero** (`CLAUDE-EDIT.md`, fase 1): pausas, muletillas y tomas repetidas
+   fuera, verificado con `listen`. Nada de efectos hasta que el corte suene natural.
+2. **Después el perfil** (fase 2): `timeline` + `export` del proyecto «(Claude)» y el plan
+   del motor. Si hay que volver a cortar, se rehace `timeline` y se revisan las anclas.
+
+Lo que se corta en la fase 1, sea cual sea el perfil:
+
+- **Repeticiones y errores:** si la persona se equivoca y vuelve a decir lo mismo, queda
+  solo la toma buena y completa, aunque el perfil sea de humor. Una repetición se deja
+  solo si ella misma es el chiste (y eso se le cuenta a Isaac).
+- **Silencios sin acción:** en gameplays y grabaciones largas, `pauses.keepMs` acorta cada
+  pausa larga a su tramo con más movimiento en pantalla (ver `CLAUDE-EDIT.md`).
+
+**Vocabulario tico:** `vocabulario.json` (este directorio) va en todos los perfiles: su
+`whisperPrompt` le enseña a Whisper palabras como mae, tuanis, la vara, diay, brete, y
+sus `correcciones` arreglan en los subtítulos los errores que Whisper repite (las del plan
+van después y mandan). Cada palabra tica o nombre que salga mal se agrega ahí, no solo en
+el plan del video.
+
 ## Reglas que valen para todos los perfiles
 
 - Nada inventado: cifras, nombres y promesas solo si la persona los dice.

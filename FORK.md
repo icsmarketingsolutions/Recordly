@@ -89,7 +89,11 @@ nuestros cambios encima. `rapid-captions` y `camera-fx` son las ramas histórica
   `export --no-captions` alimentan los motion graphics; `export --no-webcam` + `webcam`
   dejan la cámara aparte para que el motor arme tomas propias (esquina, completa, grande,
   dividida); el criterio está en `perfiles-video/` (perfiles «exagerado», «narrativa» y
-  «gaming») y las instrucciones para Codex en `AGENTS.md`.
+  «gaming») y las instrucciones para Codex en `AGENTS.md`. `import` arma un proyecto con
+  una grabación de OBS (video + cámara aparte; la voz se toma de su propia pista de audio,
+  así la música del juego no tapa las pausas), `pauses.keepMs` acorta las pausas largas a
+  su tramo con más movimiento en vez de borrarlas, y `perfiles-video/vocabulario.json`
+  le enseña a Whisper el habla tica (y corrige sus errores en los subtítulos del motor).
 
 ## Cómo se construye (Windows)
 
