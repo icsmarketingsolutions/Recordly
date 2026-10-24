@@ -134,5 +134,6 @@ inventado tiene que ser **obviamente** broma: stats absurdos, logros ridículos)
 de terceros, sin burlarse de clientes ni de terceros reales: el blanco del chiste es la
 situación o quien habla.
 
-Prueba de referencia: 23-oct-2026, tramo de 82 s de un video de demo con las cinco tomas
-y casi todos los recursos (pendiente de aprobación de Isaac).
+Referencia aprobada por Isaac (24-oct-2026): tramo de 82 s de un video de demo con las
+cinco tomas y casi todos los recursos (~30 beats en 82 s). Su plan (`motion.json` de la
+carpeta de prueba del motor, fuera de este repo) es el ejemplo a copiar.
