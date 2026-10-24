@@ -1,98 +1,29 @@
 {
-  "descripcion": "Vocabulario de Costa Rica que Whisper tiene que esperar (whisperPrompt, lo usa `claude-edit transcribe` en todos los perfiles) y errores conocidos que se corrigen en los subtítulos (correcciones, las aplica sobrevideo.mjs antes de las del plan). Agregar aquí cada palabra tica que salga mal.",
-  "whisperPrompt": "Mae, qué tuanis la vara, pura vida. Diay, qué chiva, mae. Ese brete está a cachete. Qué despiche, qué sal, qué pereza. Upe, ¿hay alguien? Tranquilo, mop. Ese chunche, esa birra, la harina, el carajillo, los güilas, la jupa, el tata, la mae. Pichudo, qué rajado, qué torta, qué varas, qué nota. Me jalé una torta. Al chile, maje, qué carga. Claude, ChatGPT, YouTube, ¿cómo están?, Nosara, Guanacaste, Heredia, San José, Cartago, Puntarenas, Limón.",
-  "correcciones": [
-    [
-      "tuani",
-      "tuanis"
-    ],
-    [
-      "tuanes",
-      "tuanis"
-    ],
-    [
-      "la bara",
-      "la vara"
-    ],
-    [
-      "esa bara",
-      "esa vara"
-    ],
-    [
-      "qué bara",
-      "qué vara"
-    ],
-    [
-      "que bara",
-      "qué vara"
-    ],
-    [
-      "las baras",
-      "las varas"
-    ],
-    [
-      "qué baras",
-      "qué varas"
-    ],
-    [
-      "pura vía",
-      "pura vida"
-    ],
-    [
-      "diai",
-      "diay"
-    ],
-    [
-      "qué chiba",
-      "qué chiva"
-    ],
-    [
-      "que chiba",
-      "qué chiva"
-    ],
-    [
-      "a cachetes",
-      "a cachete"
-    ],
-    [
-      "guilas",
-      "güilas"
-    ],
-    [
-      "guanacaste",
-      "Guanacaste"
-    ],
-    [
-      "nosara",
-      "Nosara"
-    ],
-    [
-      "heredia",
-      "Heredia"
-    ],
-    [
-      "san jose",
-      "San José"
-    ],
-    [
-      "cómo estáis",
-      "cómo están"
-    ],
-    [
-      "qué tal estáis",
-      "qué tal están"
-    ],
-    [
-      "clod",
-      "Claude"
-    ],
-    [
-      "cloth",
-      "Claude"
-    ],
-    [
-      "chat gpt",
-      "ChatGPT"
-    ]
-  ]
+	"descripcion": "Vocabulario de Costa Rica que Whisper tiene que esperar (whisperPrompt, lo usa `claude-edit transcribe` en todos los perfiles) y errores conocidos que se corrigen en los subtítulos (correcciones, las aplica sobrevideo.mjs antes de las del plan). Agregar aquí cada palabra tica que salga mal.",
+	"whisperPrompt": "Mae, qué tuanis la vara, pura vida. Diay, qué chiva, mae. Ese brete está a cachete. Qué despiche, qué sal, qué pereza. Upe, ¿hay alguien? Tranquilo, mop. Ese chunche, esa birra, la harina, el carajillo, los güilas, la jupa, el tata, la mae. Pichudo, qué rajado, qué torta, qué varas, qué nota. Me jalé una torta. Al chile, maje, qué carga. Claude, ChatGPT, YouTube, ¿cómo están?, Nosara, Guanacaste, Heredia, San José, Cartago, Puntarenas, Limón.",
+	"correcciones": [
+		["tuani", "tuanis"],
+		["tuanes", "tuanis"],
+		["la bara", "la vara"],
+		["esa bara", "esa vara"],
+		["qué bara", "qué vara"],
+		["que bara", "qué vara"],
+		["las baras", "las varas"],
+		["qué baras", "qué varas"],
+		["pura vía", "pura vida"],
+		["diai", "diay"],
+		["qué chiba", "qué chiva"],
+		["que chiba", "qué chiva"],
+		["a cachetes", "a cachete"],
+		["guilas", "güilas"],
+		["guanacaste", "Guanacaste"],
+		["nosara", "Nosara"],
+		["heredia", "Heredia"],
+		["san jose", "San José"],
+		["cómo estáis", "cómo están"],
+		["qué tal estáis", "qué tal están"],
+		["clod", "Claude"],
+		["cloth", "Claude"],
+		["chat gpt", "ChatGPT"]
+	]
 }
