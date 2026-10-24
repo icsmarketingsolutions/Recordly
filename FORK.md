@@ -67,6 +67,18 @@ nuestros cambios encima. `rapid-captions` y `camera-fx` son las ramas histórica
   Ahora la vista previa y la grabación piden lo mismo (`src/lib/webcamCapture.ts`:
   1920×1080 a 30 fps, 12 Mbps) y la vista previa solo lo muestra chico. Probado con
   `scripts/e2e/e2e-webcam-quality.mjs` (graba 8 s y mide el archivo de la cámara).
+- **Micrófono sin cortes con la compu cargada**: el hilo de WASAPI de `wgc-capture`
+  usaba un búfer de 20 ms y dormía con prioridad normal; con un export u otros procesos
+  pesados se despertaba tarde, WASAPI tiraba muestras (`DATA_DISCONTINUITY`) y los
+  huecos se rellenaban con silencio: la voz sonaba entrecortada (OBS no, porque usa
+  MMCSS). Ahora el búfer es de 200 ms y el hilo se registra en MMCSS «Pro Audio» con
+  prioridad alta. Medido con la CPU al 100 %: antes 13–163 discontinuidades y 1,2–1,8 s
+  de silencio insertado en 15 s; después 1 discontinuidad y 0 s. Las métricas quedan en
+  `<grabación>.mic.wav.json` (`dataDiscontinuityCount`, `insertedSilenceFrames`).
+- **Compila con Build Tools 2026**: `windows-cmake-generators.mjs` prueba VS 2026 con su
+  propio compilador (v145) si no está el de 2022, y `wgc-capture` define
+  `_SILENCE_EXPERIMENTAL_COROUTINE_DEPRECATION_WARNINGS` (MSVC 14.5x rechaza
+  `<experimental/coroutine>` sin eso).
 - **Sin cuenta obligatoria**: grabar y guardar nunca piden iniciar sesión; el onboarding
   del upstream solo se abre a pedido y siempre se puede cerrar.
 - **Edición con Claude** (`npm run claude-edit`, `CLAUDE-EDIT.md`): CLI que transcribe

@@ -13,6 +13,8 @@ add_executable(wgc-capture
 )
 
 target_compile_options(wgc-capture PRIVATE /EHsc /W3 /utf-8)
+# C++/WinRT under C++17 uses <experimental/coroutine>; MSVC 14.5x refuses it without this.
+target_compile_definitions(wgc-capture PRIVATE _SILENCE_EXPERIMENTAL_COROUTINE_DEPRECATION_WARNINGS)
 
 target_link_libraries(wgc-capture PRIVATE
   windowsapp

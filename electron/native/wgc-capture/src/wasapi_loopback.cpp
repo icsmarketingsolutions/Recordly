@@ -5,8 +5,10 @@
 #include <algorithm>
 #include <cmath>
 #include <cwctype>
+#include <avrt.h>
 
 #pragma comment(lib, "ole32.lib")
+#pragma comment(lib, "avrt.lib")
 
 namespace {
 constexpr int64_t kHundredNanosecondsPerSecond = 10000000;
@@ -17,6 +19,13 @@ constexpr uint32_t kMinimumGapFillThresholdMs = 50;
 constexpr uint32_t kDiscontinuityGapFillThresholdMs = 140;
 constexpr uint32_t kSilentDiscontinuityCompactThresholdMs = 40;
 constexpr uint32_t kBoundaryFadeInMs = 5;
+// Shared-mode buffer the capture thread drains. With 20 ms, a busy machine (an export
+// running, many processes) delayed the thread past the buffer: WASAPI dropped samples
+// (DATA_DISCONTINUITY) and the gaps were filled with silence, so the voice sounded
+// choppy. Recording does not care about latency, so leave plenty of room.
+constexpr REFERENCE_TIME kCaptureBufferHns = 2000000; // 200 ms
+// The thread still wakes about this often, so packets stay small.
+constexpr DWORD kCapturePollMs = 10;
 
 int64_t queryPerformanceCounterHns() {
     LARGE_INTEGER counter;
@@ -208,11 +217,10 @@ bool WasapiCapture::initializeCommon() {
     hr = audioClient_->GetMixFormat(&mixFormat_);
     if (FAILED(hr)) return false;
 
-    REFERENCE_TIME bufferDuration = 200000; // 20ms
     hr = audioClient_->Initialize(
         AUDCLNT_SHAREMODE_SHARED,
         streamFlags_,
-        bufferDuration, 0, mixFormat_, nullptr);
+        kCaptureBufferHns, 0, mixFormat_, nullptr);
     if (FAILED(hr)) return false;
 
     hr = audioClient_->GetBufferSize(&bufferFrameCount_);
@@ -430,6 +438,16 @@ void WasapiCapture::captureThread() {
     // than Windows 10, causing silent audio capture failures without this.
     CoInitializeEx(nullptr, COINIT_MULTITHREADED);
 
+    // Like OBS: register with MMCSS as pro audio so the scheduler wakes this thread on
+    // time even while the CPU is saturated; plain high priority if MMCSS is unavailable.
+    DWORD mmcssTaskIndex = 0;
+    HANDLE mmcssTask = AvSetMmThreadCharacteristicsW(L"Pro Audio", &mmcssTaskIndex);
+    if (mmcssTask) {
+        AvSetMmThreadPriority(mmcssTask, AVRT_PRIORITY_HIGH);
+    } else {
+        SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_TIME_CRITICAL);
+    }
+
     WORD channels = static_cast<WORD>(mixFormat_->nChannels);
     const bool isFloat = isFloatFormat(mixFormat_);
     const bool isPcm = isPcmFormat(mixFormat_);
@@ -440,8 +458,7 @@ void WasapiCapture::captureThread() {
 
     std::vector<int16_t> pcmBuffer;
 
-    DWORD sleepMs = static_cast<DWORD>((static_cast<double>(bufferFrameCount_) / mixFormat_->nSamplesPerSec) * 500.0);
-    if (sleepMs < 5) sleepMs = 5;
+    const DWORD sleepMs = kCapturePollMs;
 
     while (capturing_) {
         if (paused_) {
@@ -619,5 +636,6 @@ void WasapiCapture::captureThread() {
         }
     }
 
+    if (mmcssTask) AvRevertMmThreadCharacteristics(mmcssTask);
     CoUninitialize();
 }

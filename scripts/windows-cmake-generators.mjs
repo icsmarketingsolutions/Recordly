@@ -1,5 +1,7 @@
 export const WINDOWS_CMAKE_GENERATORS = Object.freeze([
 	{ name: "Visual Studio 18 2026", label: "VS 2026", toolset: "v143" },
+	// Build Tools 2026 without the 2022 toolset: its own compiler (v145).
+	{ name: "Visual Studio 18 2026", label: "VS 2026 (v145)" },
 	{ name: "Visual Studio 17 2022", label: "VS 2022" },
 	{ name: "Visual Studio 16 2019", label: "VS 2019" },
 ]);
