@@ -68,8 +68,10 @@ nuestros cambios encima. `rapid-captions` y `camera-fx` son las ramas histórica
   (rangos de palabras con `expect`, pausas, muletillas) con la misma lógica de «Quitar
   pausas», escribiendo un proyecto aparte `<nombre> (Claude).recordly`; `listen`
   vuelve a transcribir la línea de tiempo editada para verificar los cortes. `timeline` y
-  `export --no-captions` alimentan los motion graphics; el criterio está en
-  `perfiles-video/` (perfiles «exagerado» y «narrativa») y las instrucciones para Codex en `AGENTS.md`.
+  `export --no-captions` alimentan los motion graphics; `export --no-webcam` + `webcam`
+  dejan la cámara aparte para que el motor arme tomas propias (esquina, completa, grande,
+  dividida); el criterio está en `perfiles-video/` (perfiles «exagerado», «narrativa» y
+  «gaming») y las instrucciones para Codex en `AGENTS.md`.
 
 ## Cómo se construye (Windows)
 

@@ -1016,18 +1016,16 @@ async function commandExport(projectPath: string, flags: Record<string, string |
 	const dir = workDir(project, projectPath);
 	await fs.mkdir(dir, { recursive: true });
 	let exportPath = projectPath;
-	if (flags["no-captions"]) {
-		const settings = (project.editor.autoCaptionSettings ?? {}) as Record<string, unknown>;
-		const copy: Project = {
-			...project,
-			editor: {
-				...project.editor,
-				autoCaptionSettings: { ...settings, enabled: false },
-				autoCaptions: [],
-			},
-		};
-		exportPath = path.join(dir, "export-no-captions.recordly");
-		await fs.writeFile(exportPath, JSON.stringify(copy));
+	if (flags["no-captions"] || flags["no-webcam"]) {
+		const editor = { ...project.editor };
+		if (flags["no-captions"]) {
+			const settings = (project.editor.autoCaptionSettings ?? {}) as Record<string, unknown>;
+			editor.autoCaptionSettings = { ...settings, enabled: false };
+			editor.autoCaptions = [];
+		}
+		if (flags["no-webcam"]) editor.webcam = { ...((editor.webcam ?? {}) as object), enabled: false };
+		exportPath = path.join(dir, "export-copy.recordly");
+		await fs.writeFile(exportPath, JSON.stringify({ ...project, editor }));
 	}
 	const outPath = path.resolve(out);
 	await fs.rm(outPath, { force: true });
@@ -1054,6 +1052,100 @@ async function commandExport(projectPath: string, flags: Record<string, string |
 	console.log(
 		`exported ${formatTime(durationMs)} in ${((Date.now() - started) / 1000).toFixed(0)} s → ${outPath}`,
 	);
+}
+
+type WebcamSettings = {
+	sourcePath?: string | null;
+	timeOffsetMs?: number;
+	mirror?: boolean;
+	cropRegion?: { x: number; y: number; width: number; height: number };
+};
+
+/** The project's webcam file, or the one its recording session names when the project lost it. */
+async function findWebcamPath(project: Project): Promise<string> {
+	const webcam = (project.editor.webcam ?? {}) as WebcamSettings;
+	if (webcam.sourcePath && existsSync(webcam.sourcePath)) return webcam.sourcePath;
+	const sessionPath = project.videoPath.replace(/\.[^.]+$/, ".recordly-session.json");
+	if (existsSync(sessionPath)) {
+		const session = JSON.parse(await fs.readFile(sessionPath, "utf8")) as {
+			webcamFileName?: string;
+		};
+		const candidate =
+			session.webcamFileName && path.join(path.dirname(project.videoPath), session.webcamFileName);
+		if (candidate && existsSync(candidate)) return candidate;
+	}
+	fail("this project has no webcam recording");
+}
+
+/**
+ * The webcam footage cut like the edited timeline (same clips, speeds and sync offset as
+ * the editor), mirrored and cropped like the editor shows it, without audio. Lets the
+ * motion-graphics step place the camera itself (full frame, split, big) over an export
+ * made with `export --no-webcam`.
+ */
+async function commandWebcam(projectPath: string, flags: Record<string, string | true>) {
+	const out = flagString(flags, "out");
+	if (!out) fail("webcam needs --out <file.mp4>");
+	const project = await readProject(projectPath);
+	const webcam = (project.editor.webcam ?? {}) as WebcamSettings;
+	const webcamPath = await findWebcamPath(project);
+	const ffmpeg = findFfmpeg();
+	const sourceDurationMs = await probeDurationMs(ffmpeg, project.videoPath);
+	const clips = getClips(project, sourceDurationMs);
+	const fps = Number(flagString(flags, "fps") ?? 30);
+	const offsetS = (webcam.timeOffsetMs ?? 0) / 1000;
+	const crop = webcam.cropRegion ?? { x: 0, y: 0, width: 1, height: 1 };
+	const look = [
+		webcam.mirror ? "hflip" : "",
+		crop.width < 1 || crop.height < 1
+			? `crop=iw*${crop.width}:ih*${crop.height}:iw*${crop.x}:ih*${crop.y}`
+			: "",
+	]
+		.filter(Boolean)
+		.join(",");
+	// Same mapping as the editor: webcam media time = source time − offset. Before the
+	// webcam started (negative times) the first frame is held.
+	const graph = clips
+		.map((clip, index) => {
+			const start = Math.max(0, getClipSourceStartMs(clip) / 1000 - offsetS);
+			const end = Math.max(start + 0.001, getClipSourceEndMs(clip) / 1000 - offsetS);
+			const speed = clip.speed > 0 ? clip.speed : 1;
+			return `[0:v]trim=${start.toFixed(3)}:${end.toFixed(3)},setpts=(PTS-STARTPTS)/${speed}[v${index}]`;
+		})
+		.join(";");
+	const concat = `${clips.map((_, index) => `[v${index}]`).join("")}concat=n=${clips.length}:v=1:a=0,fps=${fps}${look ? `,${look}` : ""}[out]`;
+	const dir = workDir(project, projectPath);
+	await fs.mkdir(dir, { recursive: true });
+	const graphPath = path.join(dir, "webcam.filter");
+	await fs.writeFile(graphPath, `${graph};${concat}`);
+	const outPath = path.resolve(out);
+	await execFileAsync(
+		ffmpeg,
+		[
+			"-y",
+			"-loglevel",
+			"error",
+			"-i",
+			webcamPath,
+			"-filter_complex_script",
+			graphPath,
+			"-map",
+			"[out]",
+			"-an",
+			"-c:v",
+			"libx264",
+			"-preset",
+			"veryfast",
+			"-crf",
+			"16",
+			"-pix_fmt",
+			"yuv420p",
+			outPath,
+		],
+		EXEC_OPTIONS,
+	);
+	const durationMs = await probeDurationMs(ffmpeg, outPath);
+	console.log(`webcam ${formatTime(durationMs)} (${clips.length} clips) → ${outPath}`);
 }
 
 async function commandFrame(projectPath: string, flags: Record<string, string | true>) {
@@ -1092,8 +1184,9 @@ const USAGE = `usage: npm run claude-edit -- <command> <project.recordly> [optio
   apply        --plan plan.json  [--dry-run] [--out file] [--in-place]
   listen       transcribe the edited timeline again, to hear what the cuts left (--lang es)
   timeline     words in edited-video time, for motion graphics  (--out words.json)
-  export       Recordly renders the project  --out file.mp4 [--quality source] [--no-captions]
-  frame        --at 1:23.4  [--out file.png]   still from the recording, source time`;
+  export       Recordly renders the project  --out file.mp4 [--quality source] [--no-captions] [--no-webcam]
+  webcam       the webcam cut like the timeline, no audio  --out cam.mp4 [--fps 30]
+  frame       --at 1:23.4  [--out file.png]   still from the recording, source time`;
 
 async function main() {
 	const { positional, flags } = parseArgs(process.argv.slice(2));
@@ -1120,6 +1213,8 @@ async function main() {
 			return commandExport(resolved, flags);
 		case "listen":
 			return commandListen(resolved, flags);
+		case "webcam":
+			return commandWebcam(resolved, flags);
 		case "frame":
 			return commandFrame(resolved, flags);
 		default:

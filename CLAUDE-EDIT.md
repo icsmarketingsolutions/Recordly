@@ -48,6 +48,12 @@ renderiza el proyecto en un perfil aparte, sin sus subtítulos) alimentan
 llamadas, cifras, golpes de zoom, SFX y música. Ver `_videos-brag/_motor/SOBREVIDEO.md`
 y, para el criterio de calidad, el perfil de edición elegido en `perfiles-video/`.
 
+**Cámara aparte** (tomas con la cámara grande, completa o dividida): `export --no-webcam`
+exporta solo la pantalla y `webcam --out cam.mp4` corta la grabación de la cámara igual
+que la línea de tiempo (mismos clips, velocidades y desfase que el editor; espejo y
+recorte como se ven en Recordly; sin audio). El plan del motor la recibe en `camara`.
+Los efectos de cámara de Recordly (desenfoque de fondo, mirada) no van en ese archivo.
+
 ## El plan
 
 ```json

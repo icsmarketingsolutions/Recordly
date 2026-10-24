@@ -16,7 +16,7 @@ con datos personales ni secretos.
 Leer en este orden y seguirlos al pie de la letra:
 
 1. `CLAUDE-EDIT.md` — fase 1: transcribir y cortar errores con `npm run -s claude-edit`.
-2. `perfiles-video/README.md` y el perfil elegido (`exagerado.md` o `narrativa.md`) — **el criterio de calidad** (densidad, subtítulos, catálogo de
+2. `perfiles-video/README.md` y el perfil elegido (`exagerado.md`, `narrativa.md` o `gaming.md`) — **el criterio de calidad** (densidad, subtítulos, catálogo de
    efectos, revisión). Sin esta guía el resultado queda pobre.
 3. `../../_videos-brag/_motor/SOBREVIDEO.md` — fase 2: motion graphics con
    `node sobrevideo.mjs` (esa carpeta está fuera de git, junto a `Recordly/`).
