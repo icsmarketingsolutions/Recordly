@@ -46,7 +46,7 @@ npm run -s claude-edit -- frame       "<proyecto>.recordly" --at 1:23.4
 renderiza el proyecto en un perfil aparte, sin sus subtítulos) alimentan
 `_videos-brag/_motor/sobrevideo.mjs`, que pone encima subtítulos dinámicos, títulos,
 llamadas, cifras, golpes de zoom, SFX y música. Ver `_videos-brag/_motor/SOBREVIDEO.md`
-y, para el criterio de calidad, `GUIA-ESTILO-VIDEO.md`.
+y, para el criterio de calidad, el perfil de edición elegido en `perfiles-video/`.
 
 ## El plan
 

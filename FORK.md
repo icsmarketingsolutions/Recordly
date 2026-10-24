@@ -69,7 +69,7 @@ nuestros cambios encima. `rapid-captions` y `camera-fx` son las ramas histórica
   pausas», escribiendo un proyecto aparte `<nombre> (Claude).recordly`; `listen`
   vuelve a transcribir la línea de tiempo editada para verificar los cortes. `timeline` y
   `export --no-captions` alimentan los motion graphics; el criterio está en
-  `GUIA-ESTILO-VIDEO.md` y las instrucciones para Codex en `AGENTS.md`.
+  `perfiles-video/` (perfiles «exagerado» y «narrativa») y las instrucciones para Codex en `AGENTS.md`.
 
 ## Cómo se construye (Windows)
 
