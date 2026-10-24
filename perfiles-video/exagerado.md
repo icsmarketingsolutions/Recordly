@@ -1,4 +1,7 @@
-# Guía de estilo «exagerado» para videos editados por un agente
+# Perfil «exagerado» (estilo MrBeast)
+
+En el plan: `"perfil": "exagerado"` (valores por defecto en `_videos-brag/_motor/perfiles/exagerado.json`).
+Los otros perfiles están en [README.md](README.md).
 
 Esta guía es el criterio. El motor (`_videos-brag/_motor/sobrevideo.mjs`, ver
 `SOBREVIDEO.md` ahí) solo ejecuta lo que el plan pide; **la calidad sale de cómo se
