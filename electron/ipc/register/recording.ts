@@ -76,6 +76,13 @@ import {
 	waitForNativeCaptureStart,
 	waitForNativeCaptureStop,
 } from "../recording/mac";
+import {
+	appendRecordingPart,
+	clearNativeRecordingInFlight,
+	discardRecordingPart,
+	discardRecordingPartFor,
+	markNativeRecordingInFlight,
+} from "../recording/crashRecovery";
 import { resolveRecordedVideoStoragePath } from "../recording/storagePath";
 import {
 	attachWindowsCaptureLifecycle,
@@ -598,6 +605,20 @@ export function registerRecordingHandlers(
 					}
 					setWindowsNativeCaptureActive(true);
 					setNativeScreenRecordingActive(true);
+					await markNativeRecordingInFlight({
+						startedAt: timestamp,
+						tempVideoPath,
+						videoPath: outputPath,
+						tempMicPath: microphonePath ? tempMicPath : null,
+						micPath: microphonePath,
+						tempSystemAudioPath: systemAudioPath ? tempSystemAudioPath : null,
+						systemAudioPath,
+					}).catch((error) => {
+						console.warn(
+							"Failed to record the in-flight capture for crash recovery:",
+							error,
+						);
+					});
 					recordNativeCaptureDiagnostics({
 						backend: "windows-wgc",
 						phase: "start",
@@ -1013,6 +1034,7 @@ export function registerRecordingHandlers(
 						}
 					}
 					const validation = await validateRecordedVideo(finalVideoPath);
+					await clearNativeRecordingInFlight(tempVideoPath);
 
 					setWindowsCaptureProcess(null);
 					setWindowsNativeCaptureActive(false);
@@ -1820,6 +1842,9 @@ export function registerRecordingHandlers(
 			const recordingsDir = await getRecordingsDir();
 			const videoPath = resolveRecordedVideoStoragePath(recordingsDir, fileName);
 			await fs.writeFile(videoPath, Buffer.from(videoData));
+			await discardRecordingPartFor(videoPath).catch((error) => {
+				console.warn("Failed to remove the crash copy of a stored recording:", error);
+			});
 			return await finalizeStoredVideo(videoPath);
 		} catch (error) {
 			console.error("Failed to store video:", error);
@@ -1828,6 +1853,25 @@ export function registerRecordingHandlers(
 				message: "Failed to store video",
 				error: String(error),
 			};
+		}
+	});
+
+	// Browser recorders mirror their chunks to disk so a crash or power cut keeps them.
+	ipcMain.handle("append-recording-part", async (_, fileName: unknown, data: ArrayBuffer) => {
+		try {
+			await appendRecordingPart(fileName, data);
+			return { success: true as const };
+		} catch (error) {
+			return { success: false as const, error: String(error) };
+		}
+	});
+
+	ipcMain.handle("discard-recording-part", async (_, fileName: unknown) => {
+		try {
+			await discardRecordingPart(fileName);
+			return { success: true as const };
+		} catch (error) {
+			return { success: false as const, error: String(error) };
 		}
 	});
 

@@ -75,6 +75,35 @@ nuestros cambios encima. `rapid-captions` y `camera-fx` son las ramas histórica
   prioridad alta. Medido con la CPU al 100 %: antes 13–163 discontinuidades y 1,2–1,8 s
   de silencio insertado en 15 s; después 1 discontinuidad y 0 s. Las métricas quedan en
   `<grabación>.mic.wav.json` (`dataDiscontinuityCount`, `insertedSilenceFrames`).
+- **Una grabación sobrevive a un apagón o a un cierre inesperado**
+  (`electron/ipc/recording/crashRecovery.ts`). Antes se perdía todo:
+  - la pantalla y el micrófono nativos se escriben en `%TEMP%\recordly-native-<ts>.*`, y el
+    MP4 de Media Foundation solo escribe su índice (moov, con el SPS/PPS) al finalizar;
+  - la cámara y el micrófono de respaldo se juntaban en memoria del renderer.
+
+  Ahora:
+  - `wgc-capture` guarda el encabezado H.264 junto al MP4 temporal (`.h264hdr`);
+  - cada captura nativa queda anotada en `recordings/.recordly-inflight-<ts>.json` hasta
+    que se detiene bien;
+  - la cámara y el micrófono de respaldo copian cada pedazo a `<nombre final>.part`
+    (`src/lib/recordingPartWriter.ts`, `datasync` cada 2 s); el guardado normal sigue
+    saliendo de la memoria y borra la copia.
+
+  Al abrir, `recoverInterruptedRecordings`:
+  - reconstruye el MP4: pasa el mdat a Annex B con el encabezado y reparte los cuadros a lo
+    largo de la duración del WAV del micrófono (exacto, arranca con el video) o, sin
+    micrófono, del primer cuadro a la última escritura. El SPS/PPS queda solo en el avcC
+    (`filter_units=remove_types=7|8`): WebCodecs rechaza un cuadro clave que empieza con
+    ellos antes del delimitador. Para capturas viejas sin `.h264hdr`, prueba el SPS/PPS de
+    grabaciones anteriores y se queda con el que decodifica;
+  - arregla el encabezado del WAV;
+  - renombra la cámara y la enlaza a la grabación más cercana;
+  - avisa con un diálogo.
+
+  No toca archivos escritos en el último minuto. Probado matando Recordly a mitad de una
+  grabación (`scripts/e2e/e2e-crash-recording.mjs`): pantalla y micrófono vuelven con la
+  misma duración, se decodifican sin errores y Recordly los exporta. La cámara pierde los
+  últimos segundos, porque MediaRecorder entrega los fragmentos MP4 en bloques.
 - **Compila con Build Tools 2026**: `windows-cmake-generators.mjs` prueba VS 2026 con su
   propio compilador (v145) si no está el de 2022, y `wgc-capture` define
   `_SILENCE_EXPERIMENTAL_COROUTINE_DEPRECATION_WARNINGS` (MSVC 14.5x rechaza

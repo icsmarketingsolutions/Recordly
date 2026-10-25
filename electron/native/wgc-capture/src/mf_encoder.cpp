@@ -6,6 +6,7 @@
 #include <cstdint>
 #include <iostream>
 #include <cstring>
+#include <fstream>
 #include "../../common/bt709_video.h"
 
 #pragma comment(lib, "mfplat.lib")
@@ -57,6 +58,9 @@ bool MFEncoder::initialize(const std::wstring& outputPath, int width, int height
     width_ = width;
     height_ = height;
     fps_ = fps;
+    outputPath_ = outputPath;
+    sequenceHeaderWritten_ = false;
+    sequenceHeaderAttempts_ = 0;
     device_ = device;
     context_ = context;
 
@@ -341,8 +345,42 @@ bool MFEncoder::writeNv12SampleLocked(const std::vector<uint8_t>& frameBuffer, i
     hr = sinkWriter_->WriteSample(streamIndex_, sample.Get());
     if (FAILED(hr)) {
         std::cerr << "ERROR: WriteSample failed: 0x" << std::hex << hr << std::endl;
+    } else if (!sequenceHeaderWritten_ && sequenceHeaderAttempts_ < 300) {
+        // Some encoders only publish the header after their first output sample.
+        ++sequenceHeaderAttempts_;
+        writeSequenceHeaderSidecarLocked();
     }
     return SUCCEEDED(hr);
+}
+
+// The MP4 sink only writes the moov box (with the SPS/PPS) when it is finalized, so a
+// crash or power cut leaves a bare mdat that no player can open. Saving the encoder's
+// sequence header next to the output lets Recordly rebuild that file on the next launch.
+void MFEncoder::writeSequenceHeaderSidecarLocked() {
+    if (!sinkWriter_ || outputPath_.empty()) return;
+
+    ComPtr<IMFTransform> encoder;
+    if (FAILED(sinkWriter_->GetServiceForStream(streamIndex_, GUID_NULL, IID_PPV_ARGS(&encoder)))) {
+        return;
+    }
+
+    ComPtr<IMFMediaType> encodedType;
+    if (FAILED(encoder->GetOutputCurrentType(0, &encodedType))) return;
+
+    UINT32 headerSize = 0;
+    if (FAILED(encodedType->GetBlobSize(MF_MT_MPEG_SEQUENCE_HEADER, &headerSize)) || headerSize == 0) {
+        return;
+    }
+
+    std::vector<UINT8> header(headerSize);
+    if (FAILED(encodedType->GetBlob(MF_MT_MPEG_SEQUENCE_HEADER, header.data(), headerSize, nullptr))) {
+        return;
+    }
+
+    std::ofstream sidecar(outputPath_ + L".h264hdr", std::ios::binary | std::ios::trunc);
+    if (!sidecar) return;
+    sidecar.write(reinterpret_cast<const char*>(header.data()), headerSize);
+    sequenceHeaderWritten_ = sidecar.good();
 }
 
 bool MFEncoder::finalize() {

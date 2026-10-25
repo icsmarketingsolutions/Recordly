@@ -28,8 +28,12 @@ private:
     bool normalizeTimelineTimestampHnsLocked(int64_t timestampHns, int64_t& normalizedTimestampHns) const;
     bool extendLastFrameToLocked(int64_t timestampHns);
     bool writeNv12SampleLocked(const std::vector<uint8_t>& frameBuffer, int64_t timestampHns);
+    void writeSequenceHeaderSidecarLocked();
 
     ComPtr<IMFSinkWriter> sinkWriter_;
+    std::wstring outputPath_;
+    bool sequenceHeaderWritten_ = false;
+    int sequenceHeaderAttempts_ = 0;
     ID3D11Device* device_ = nullptr;
     ID3D11DeviceContext* context_ = nullptr;
     ComPtr<ID3D11Texture2D> stagingTexture_;

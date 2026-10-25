@@ -2,6 +2,7 @@ import { fixWebmDuration } from "@fix-webm-duration/fix";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "@/components/ui/toast";
 import { getEffectiveRecordingDurationMs } from "@/lib/mediaTiming";
+import { createRecordingPartWriter, type RecordingPartWriter } from "@/lib/recordingPartWriter";
 import { WEBCAM_BITRATE, webcamVideoConstraints } from "@/lib/webcamCapture";
 import { acquireBrowserScreenCapture, isCapturePermissionDismissed } from "./browserScreenCapture";
 import {
@@ -392,6 +393,8 @@ export function useScreenRecorder(): UseScreenRecorderReturn {
 	const mixingContext = useRef<AudioContext | null>(null);
 	const chunks = useRef<Blob[]>([]);
 	const webcamChunks = useRef<Blob[]>([]);
+	const webcamPartWriter = useRef<RecordingPartWriter | null>(null);
+	const micFallbackPartWriter = useRef<RecordingPartWriter | null>(null);
 	const startTime = useRef<number>(0);
 	const webcamStartTime = useRef<number | null>(null);
 	const webcamTimeOffsetMs = useRef(0);
@@ -625,6 +628,8 @@ export function useScreenRecorder(): UseScreenRecorderReturn {
 			}
 			micFallbackRecorder.current = null;
 			micFallbackChunks.current = [];
+			void micFallbackPartWriter.current?.discard();
+			micFallbackPartWriter.current = null;
 			micFallbackTrackSettings.current = null;
 			micFallbackRequestedConstraints.current = null;
 			micFallbackAudioInputDevices.current = null;
@@ -640,6 +645,7 @@ export function useScreenRecorder(): UseScreenRecorderReturn {
 			}
 
 			micFallbackChunks.current.push(event.data);
+			micFallbackPartWriter.current?.append(event.data);
 			const startedAt = micFallbackRecorderStartedAt.current;
 			if (startedAt === null) {
 				return;
@@ -838,6 +844,8 @@ export function useScreenRecorder(): UseScreenRecorderReturn {
 		) => {
 			const micFallbackBlob = await micFallbackBlobPromise;
 			if (!micFallbackBlob) {
+				void micFallbackPartWriter.current?.discard();
+				micFallbackPartWriter.current = null;
 				micFallbackStartDelayMs.current = null;
 				micFallbackTrackSettings.current = null;
 				micFallbackRequestedConstraints.current = null;
@@ -891,7 +899,9 @@ export function useScreenRecorder(): UseScreenRecorderReturn {
 					finalPath,
 					sidecarOptions,
 				);
-				if (!result.success) {
+				if (result.success) {
+					await micFallbackPartWriter.current?.discard();
+				} else {
 					const errorMessage =
 						result.error || "Failed to save the fallback microphone audio track";
 					console.warn("Failed to store microphone sidecar:", errorMessage);
@@ -907,6 +917,8 @@ export function useScreenRecorder(): UseScreenRecorderReturn {
 					{ id: MICROPHONE_SIDECAR_ERROR_TOAST_ID, duration: 10000 },
 				);
 			} finally {
+				// A failed save keeps its crash copy on disk: the next launch turns it into the sidecar.
+				micFallbackPartWriter.current = null;
 				micFallbackStartDelayMs.current = null;
 				micFallbackTrackSettings.current = null;
 				micFallbackRequestedConstraints.current = null;
@@ -1016,6 +1028,7 @@ export function useScreenRecorder(): UseScreenRecorderReturn {
 			recorder.ondataavailable = (event) => {
 				if (event.data && event.data.size > 0) {
 					webcamChunks.current.push(event.data);
+					webcamPartWriter.current?.append(event.data);
 				}
 			};
 			recorder.onerror = () => {
@@ -1027,11 +1040,16 @@ export function useScreenRecorder(): UseScreenRecorderReturn {
 				const webcamMimeType = recorder.mimeType || mimeType;
 				const webcamFileName = `${RECORDING_FILE_PREFIX}${sessionTimestamp}${WEBCAM_SUFFIX}${getVideoExtensionForMimeType(webcamMimeType)}`;
 
+				const partWriter = webcamPartWriter.current;
+				webcamPartWriter.current = null;
 				try {
 					if (webcamChunks.current.length === 0) {
+						await partWriter?.discard();
 						webcamStopResolver.current?.(null);
 						return;
 					}
+					// The main process drops the crash copy once the real file is written.
+					await partWriter?.flush();
 
 					const duration = Math.max(
 						0,
@@ -1088,6 +1106,9 @@ export function useScreenRecorder(): UseScreenRecorderReturn {
 		if (recorder && recorder.state === "inactive") {
 			webcamStartTime.current = Date.now();
 			recorder.start(RECORDER_TIMESLICE_MS);
+			webcamPartWriter.current = createRecordingPartWriter(
+				`${RECORDING_FILE_PREFIX}${recordingSessionTimestamp.current ?? Date.now()}${WEBCAM_SUFFIX}${getVideoExtensionForMimeType(recorder.mimeType)}`,
+			);
 		}
 	}, []);
 
@@ -1836,6 +1857,9 @@ export function useScreenRecorder(): UseScreenRecorderReturn {
 								Date.now() - mainStartedAt,
 							);
 							if (startWasCancelled()) return;
+							micFallbackPartWriter.current = createRecordingPartWriter(
+								`${RECORDING_FILE_PREFIX}${recordingSessionTimestamp.current ?? Date.now()}.mic.webm`,
+							);
 							recorder.start(RECORDER_TIMESLICE_MS);
 							micFallbackRecorder.current = recorder;
 							unownedMicStream = null;
@@ -2394,6 +2418,8 @@ export function useScreenRecorder(): UseScreenRecorderReturn {
 
 		// Discard webcam recording regardless of recording mode
 		webcamChunks.current = [];
+		void webcamPartWriter.current?.discard();
+		webcamPartWriter.current = null;
 		if (webcamRecorder.current && webcamRecorder.current.state !== "inactive") {
 			webcamRecorder.current.stop();
 		}
@@ -2409,6 +2435,8 @@ export function useScreenRecorder(): UseScreenRecorderReturn {
 			setRecording(false);
 			window.electronAPI?.setRecordingState(false);
 			await Promise.allSettled([discardActiveNativeCapture(), stopMicFallbackRecorder()]);
+			await micFallbackPartWriter.current?.discard();
+			micFallbackPartWriter.current = null;
 			cleanupCapturedMedia();
 			return;
 		}

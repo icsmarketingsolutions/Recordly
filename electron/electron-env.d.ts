@@ -335,6 +335,11 @@ interface Window {
 			videoData: ArrayBuffer,
 			fileName: string,
 		) => Promise<{ success: boolean; path?: string; message?: string }>;
+		appendRecordingPart: (
+			fileName: string,
+			data: ArrayBuffer,
+		) => Promise<{ success: boolean; error?: string }>;
+		discardRecordingPart: (fileName: string) => Promise<{ success: boolean; error?: string }>;
 		storeCameraFxVideo: (
 			videoData: ArrayBuffer,
 		) => Promise<{ success: boolean; path?: string; error?: string }>;

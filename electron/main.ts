@@ -1,5 +1,6 @@
 import { resolveDisplayMediaSource } from "./ipc/register/sourceMapping";
 import { createSaveBeforeCloseController } from "./saveBeforeClose";
+import { recoverInterruptedRecordings } from "./ipc/recording/crashRecovery";
 import { clearRecordingTrashUndo } from "./ipc/recording/library";
 import fs from "node:fs/promises";
 import path from "node:path";
@@ -1079,6 +1080,26 @@ app.whenReady().then(async () => {
 	}
 
 	createWindow();
+	void recoverInterruptedRecordings()
+		.then(async (recovered) => {
+			if (recovered.length === 0) return;
+			console.log("[recovery] Recovered interrupted recordings:", recovered);
+			const spanish = app.getLocale().startsWith("es");
+			const { response } = await dialog.showMessageBox({
+				type: "info",
+				title: "Recordly",
+				message: spanish
+					? `Se recuperaron ${recovered.length} grabación(es) que quedaron cortadas`
+					: `Recovered ${recovered.length} recording(s) that were cut short`,
+				detail: spanish
+					? "Recordly se cerró mientras grababa (apagón o cierre inesperado). Lo grabado hasta ese momento está en la biblioteca de grabaciones."
+					: "Recordly closed while recording (power cut or crash). What was captured up to that point is in the recordings library.",
+				buttons: spanish ? ["Abrir carpeta", "Aceptar"] : ["Open folder", "OK"],
+				defaultId: 1,
+			});
+			if (response === 0) shell.showItemInFolder(recovered[0]);
+		})
+		.catch((error) => console.error("[recovery] Failed to recover recordings:", error));
 	setupAutoUpdates(getUpdateDialogWindow, sendUpdateToastToWindows);
 	if (IS_DEV && process.env.RECORDLY_DEV_PREVIEW_UPDATE === "1") {
 		setTimeout(() => {

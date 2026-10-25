@@ -633,6 +633,12 @@ contextBridge.exposeInMainWorld("electronAPI", {
 	storeRecordedVideo: (videoData: ArrayBuffer, fileName: string) => {
 		return ipcRenderer.invoke("store-recorded-video", videoData, fileName);
 	},
+	appendRecordingPart: (fileName: string, data: ArrayBuffer) => {
+		return ipcRenderer.invoke("append-recording-part", fileName, data);
+	},
+	discardRecordingPart: (fileName: string) => {
+		return ipcRenderer.invoke("discard-recording-part", fileName);
+	},
 	storeCameraFxVideo: (videoData: ArrayBuffer) => {
 		return ipcRenderer.invoke("store-camera-fx-video", videoData);
 	},
