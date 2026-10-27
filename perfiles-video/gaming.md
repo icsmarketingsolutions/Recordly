@@ -40,7 +40,15 @@ Si Isaac cuenta frases típicas o chistes recurrentes del canal, se agregan aqu�
 4. **Recorte sin piedad**: queda solo lo que se entiende sin contexto y suma; las
    explicaciones largas se dejan en una frase. Gameplay sin voz: timelapse (`ensamblar.mjs`,
    `speed` hasta 16×) con música.
-5. Un **HUD con concepto** en vez de genérico: que el propio tema del video dé el lenguaje
+5. **Contexto siempre**: la primera vez que aparece una app, un mod o un juego, un `rotulo`
+   dice qué es en una línea. Un chiste que depende de algo cortado (p. ej. «100 dólares» =
+   el precio del GTA VI) se queda sin la frase que lo explica: recuperarla en la EDL o
+   ponerla en una nota. Revisión de Isaac del 27-oct-2026.
+6. **Gameplay antes que cara** en la acción (subir, escapar, esquivar): ahí la toma
+   `completa`/`grande` tapa lo que pasa; la cámara va en `esquina`. Y no abrir con un
+   primer plano de la cara (en ese video se le veían los ojos rojos): el arranque es
+   gameplay.
+7. Un **HUD con concepto** en vez de genérico: que el propio tema del video dé el lenguaje
    visual (p. ej. dron FPV → OSD de gafas, batería = barra de progreso, pérdida de señal
    como transición).
 
@@ -154,6 +162,7 @@ comentarios secos tipo «(silencio incómodo)».
 | `senal` (`texto`) | transición entre secciones/juegos: estática analógica, desgarro y «SIN SEÑAL» o «CANAL 2 · …» |
 | `licencia` (`pruebas`, `cambia`, `cambiaAt`, `sello`) | el hilo del video: carnet con las pruebas; vuelve al final de cada una con su sello |
 | `choque` | cada choque **que se ve**: suma 1 al contador del OSD (chiste recurrente) |
+| `rotulo` (`titulo`, `text`, `pos`) | contexto: qué es la app / el mod / la prueba que se está mostrando |
 
 **Sonido** — la mitad del chiste, y **solo sonidos grabados de verdad**:
 
