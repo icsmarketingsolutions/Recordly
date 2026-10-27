@@ -9,7 +9,7 @@ que el plan diga en `estilo`, `subtitulos`, `volumenSfx` o `musica` manda sobre 
 |---|---|---|---|
 | `exagerado` | Videos de venta y redes: retener a toda costa | Un efecto cada 3–5 s, subtítulos gigantes palabra a palabra, zooms, emojis | [exagerado.md](exagerado.md) |
 | `narrativa` | Explicar: comparar opciones, mostrar un proceso, enseñar | Escenas ilustradas que se arman al ritmo de la voz, alternadas con pausas de video limpio | [narrativa.md](narrativa.md) |
-| `gaming` | Gameplays, reacciones, videos con personalidad | Ráfagas de memes, HUD de videojuego y bromas de sonido (1 cada 2–4 s) con pausas; tomas de cámara propias | [gaming.md](gaming.md) |
+| `gaming` | Gameplays, reacciones, videos con personalidad (canal Nanoyackson) | Arranque frío, hilo con final, cortes secos, música por tramo y zoom que se reinicia en cada corte; sonidos **reales** como puntuación (1 intervención cada 3–5 s); tomas de cámara propias | [gaming.md](gaming.md) |
 
 **Tomas de cámara (cualquier perfil):** con `claude-edit export --no-webcam` + `claude-edit
 webcam` la cámara va aparte y el plan elige la toma (`esquina`, `completa`, `grande`,

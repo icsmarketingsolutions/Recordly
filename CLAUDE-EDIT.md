@@ -56,6 +56,10 @@ renderiza el proyecto en un perfil aparte, sin sus subtítulos) alimentan
 llamadas, cifras, golpes de zoom, SFX y música. Ver `_videos-brag/_motor/SOBREVIDEO.md`
 y, para el criterio de calidad, el perfil de edición elegido en `perfiles-video/`.
 
+**Varias grabaciones en un video** (hub + un video por juego, arranque frío, timelapse de más
+de 2×): `transcribe` cada proyecto y armar el video base con `_videos-brag/_motor/ensamblar.mjs`
+(EDL por ids de palabra con `expect`), sin pasar por `apply`/`export`. Ver `SOBREVIDEO.md`.
+
 **Cámara aparte** (tomas con la cámara grande, completa o dividida): `export --no-webcam`
 exporta solo la pantalla y `webcam --out cam.mp4` corta la grabación de la cámara igual
 que la línea de tiempo (mismos clips, velocidades y desfase que el editor; espejo y
