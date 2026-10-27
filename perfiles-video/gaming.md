@@ -52,6 +52,22 @@ Si Isaac cuenta frases típicas o chistes recurrentes del canal, se agregan aqu�
    visual (p. ej. dron FPV → OSD de gafas, batería = barra de progreso, pérdida de señal
    como transición).
 
+### Shorts (verticales, 40–60 s)
+
+Se sacan de videos ya armados (`_videos-brag/_motor/vertical.mjs`, ver `SOBREVIDEO.md`):
+
+- **Un short = una sola idea con final**: un reto (una cueva, una carrera), una historia (el
+  regreso al canal) o una opinión con prueba («ya no edito mis videos» → y el resultado).
+- **Gancho en el primer segundo**: el momento más fuerte va primero (el choque, el grito) con
+  un `gancho` arriba que dice de qué va en 5–7 palabras; si el pago es otro momento, se
+  congela («¿cómo llegamos a esto?») y corta al inicio.
+- **Toma por momento**: `juego` (juego arriba, cara abajo) cuando lo que pasa en pantalla es
+  lo importante; `cara` cuando habla y el juego es relleno; `full` para la acción pura.
+- El recurso que vuelve (la licencia FPV) cierra cada short: así cada short es una parte de
+  la misma historia y lleva al video largo. Cierre: «Video completo en el canal».
+- Historia del canal con **datos reales del canal** (títulos y vistas de sus videos viejos en
+  `tarjeta`), nunca cifras inventadas.
+
 ## 1. Flujo
 
 Igual que [exagerado.md](exagerado.md) §1, con la **cámara aparte** (este perfil vive de
