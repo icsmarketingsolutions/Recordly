@@ -1125,6 +1125,9 @@ contextBridge.exposeInMainWorld("electronAPI", {
 	getRecordingsDirectory: () => {
 		return ipcRenderer.invoke("get-recordings-directory");
 	},
+	getRecordingsFolderSize: () => {
+		return ipcRenderer.invoke("get-recordings-folder-size");
+	},
 	chooseRecordingsDirectory: () => {
 		return ipcRenderer.invoke("choose-recordings-directory");
 	},

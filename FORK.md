@@ -108,6 +108,10 @@ nuestros cambios encima. `rapid-captions` y `camera-fx` son las ramas histórica
   propio compilador (v145) si no está el de 2022, y `wgc-capture` define
   `_SILENCE_EXPERIMENTAL_COROUTINE_DEPRECATION_WARNINGS` (MSVC 14.5x rechaza
   `<experimental/coroutine>` sin eso).
+- **Carpeta de grabaciones a mano**: Ajustes → Recording muestra la ruta y cuánto ocupa
+  (las tomas crudas, cámaras y respaldos se quedan ahí hasta borrarlos) con «Show folder»;
+  el panel Clips del editor tiene el mismo botón de carpeta a la vista. Para limpiarla
+  cada cierto tiempo a mano.
 - **Sin cuenta obligatoria**: grabar y guardar nunca piden iniciar sesión; el onboarding
   del upstream solo se abre a pedido y siempre se puede cerrar.
 - **Edición con Claude** (`npm run claude-edit`, `CLAUDE-EDIT.md`): CLI que transcribe

@@ -1044,6 +1044,7 @@ interface Window {
 			isDefault: boolean;
 			error?: string;
 		}>;
+		getRecordingsFolderSize: () => Promise<{ success: boolean; bytes: number; error?: string }>;
 		chooseRecordingsDirectory: () => Promise<{
 			success: boolean;
 			canceled?: boolean;

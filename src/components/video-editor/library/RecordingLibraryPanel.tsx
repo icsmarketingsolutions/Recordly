@@ -77,6 +77,15 @@ export function RecordingLibraryPanel({
 		>
 			<header className="flex min-h-14 shrink-0 items-center gap-2 px-5 py-3">
 				<h2 className="flex-1 text-[14px] font-semibold">Clips</h2>
+				<HeroButton
+					isIconOnly
+					variant="ghost"
+					size="sm"
+					aria-label="Open recordings folder"
+					onPress={() => void window.electronAPI.openRecordingsFolder()}
+				>
+					<FolderOpen weight="fill" className="size-5" />
+				</HeroButton>
 				<Dropdown>
 					<HeroButton
 						isIconOnly
