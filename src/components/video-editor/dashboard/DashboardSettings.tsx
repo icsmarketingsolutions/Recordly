@@ -5,11 +5,17 @@ import { Switch } from "@/components/ui/switch";
 import { supportsHudCaptureProtection } from "@/lib/hudCaptureProtection";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/toast";
+function formatBytes(bytes: number) {
+	if (bytes < 1024 ** 2) return `${Math.round(bytes / 1024)} KB`;
+	if (bytes < 1024 ** 3) return `${(bytes / 1024 ** 2).toFixed(0)} MB`;
+	return `${(bytes / 1024 ** 3).toFixed(1)} GB`;
+}
 export const DashboardSettingsContext = createContext<ReactNode>(null);
 export function DashboardSettings({ onImportFile }: { onImportFile: () => Promise<void> }) {
 	const settingsContent = useContext(DashboardSettingsContext);
 	const [directory, setDirectory] = useState("");
 	const [recordings, setRecordings] = useState("");
+	const [recordingsSize, setRecordingsSize] = useState<number | null>(null);
 	const [hideHud, setHideHud] = useState(true);
 	const [captureSupported, setCaptureSupported] = useState(false);
 	const [busy, setBusy] = useState(false);
@@ -29,9 +35,11 @@ export function DashboardSettings({ onImportFile }: { onImportFile: () => Promis
 			window.electronAPI.getRecordingsDirectory(),
 			window.electronAPI.getHudOverlayCaptureProtection(),
 			window.electronAPI.getPlatform(),
+			window.electronAPI.getRecordingsFolderSize(),
 		])
-			.then(([directory, protection, platform]) => {
+			.then(([directory, protection, platform, size]) => {
 				if (!active) return;
+				if (size.success) setRecordingsSize(size.bytes);
 				if (directory.success) setRecordings(directory.path);
 				if (protection.success) setHideHud(protection.enabled);
 				setCaptureSupported(supportsHudCaptureProtection(platform));
@@ -76,28 +84,56 @@ export function DashboardSettings({ onImportFile }: { onImportFile: () => Promis
 					<SettingsRow
 						title="Recordings folder"
 						description={
-							<span className="block truncate" title={recordings}>
-								{recordings}
-							</span>
+							<>
+								<span className="block truncate" title={recordings}>
+									{recordings}
+								</span>
+								{recordingsSize !== null && (
+									<span className="block">
+										{formatBytes(recordingsSize)} in use. Raw takes and backups
+										stay here until you delete them.
+									</span>
+								)}
+							</>
 						}
 					>
-						<Button
-							variant="secondary"
-							size="sm"
-							disabled={busy}
-							onClick={() =>
-								void run(async () => {
-									const result =
-										await window.electronAPI.chooseRecordingsDirectory();
-									if (result.canceled) return;
-									if (!result.success || !result.path)
-										throw Error("Could not change recordings folder");
-									setRecordings(result.path);
-								})
-							}
-						>
-							Change folder
-						</Button>
+						<div className="flex gap-2">
+							<Button
+								variant="secondary"
+								size="sm"
+								disabled={busy}
+								onClick={() =>
+									void run(async () => {
+										const result =
+											await window.electronAPI.openRecordingsFolder();
+										if (!result.success)
+											throw Error(
+												result.message ??
+													"Could not open recordings folder",
+											);
+									})
+								}
+							>
+								Show folder
+							</Button>
+							<Button
+								variant="secondary"
+								size="sm"
+								disabled={busy}
+								onClick={() =>
+									void run(async () => {
+										const result =
+											await window.electronAPI.chooseRecordingsDirectory();
+										if (result.canceled) return;
+										if (!result.success || !result.path)
+											throw Error("Could not change recordings folder");
+										setRecordings(result.path);
+									})
+								}
+							>
+								Change folder
+							</Button>
+						</div>
 					</SettingsRow>
 					{captureSupported && (
 						<SettingsRow

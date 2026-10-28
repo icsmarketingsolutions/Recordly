@@ -421,6 +421,24 @@ export function registerProjectHandlers() {
 		}
 	});
 
+	ipcMain.handle("get-recordings-folder-size", async () => {
+		const sizeOf = async (dir: string): Promise<number> => {
+			let total = 0;
+			for (const entry of await fs.readdir(dir, { withFileTypes: true })) {
+				const entryPath = path.join(dir, entry.name);
+				if (entry.isDirectory()) total += await sizeOf(entryPath);
+				else if (entry.isFile())
+					total += (await fs.stat(entryPath).catch(() => null))?.size ?? 0;
+			}
+			return total;
+		};
+		try {
+			return { success: true, bytes: await sizeOf(await getRecordingsDir()) };
+		} catch (error) {
+			return { success: false, bytes: 0, error: String(error) };
+		}
+	});
+
 	ipcMain.handle("choose-recordings-directory", async () => {
 		try {
 			const current = await getRecordingsDir();
