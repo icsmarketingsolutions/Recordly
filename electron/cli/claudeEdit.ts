@@ -102,8 +102,12 @@ type EditPlan = {
 	 * `false` keeps pauses; otherwise the "Remove pauses" settings. With `keepMs`, a pause
 	 * of `minMs` or more is shortened to `keepMs` (plus padding) instead of removed: the
 	 * kept stretch is where the video moves most (gameplay), so quiet, still parts go.
+	 * `longMs` + `keepLongMs`: pauses of `longMs` or more keep `keepLongMs` instead, so a
+	 * demo can drop thinking pauses but still show what happens on screen in the long ones.
 	 */
-	pauses?: false | { minMs?: number; padMs?: number; keepMs?: number };
+	pauses?:
+		| false
+		| { minMs?: number; padMs?: number; keepMs?: number; longMs?: number; keepLongMs?: number };
 	/** `true` for the built-in list, or extra words to treat as fillers. */
 	fillers?: boolean | string[];
 	/** Store the transcript as the project's captions when it has none. */
@@ -917,9 +921,13 @@ async function commandApply(projectPath: string, flags: Record<string, string | 
 				? silence.endMs
 				: transcript.sourceDurationMs;
 			if (endMs - silence.startMs < pauses.minMs) continue;
+			const keepMs =
+				pauses.longMs !== undefined && endMs - silence.startMs >= pauses.longMs
+					? (pauses.keepLongMs ?? pauses.keepMs)
+					: pauses.keepMs;
 			const inner = { startMs: silence.startMs + pauses.padMs, endMs: endMs - pauses.padMs };
-			if (inner.endMs - inner.startMs <= pauses.keepMs) continue;
-			const keep = busiestWindow(motion, inner.startMs, inner.endMs, pauses.keepMs);
+			if (inner.endMs - inner.startMs <= keepMs) continue;
+			const keep = busiestWindow(motion, inner.startMs, inner.endMs, keepMs);
 			if (keep.startMs > inner.startMs)
 				spans.push({ startMs: inner.startMs, endMs: keep.startMs, kind: "filler" });
 			if (keep.endMs < inner.endMs)
@@ -949,7 +957,7 @@ async function commandApply(projectPath: string, flags: Record<string, string | 
 	for (const line of report) console.log(line);
 	if (pauses?.keepMs !== undefined)
 		console.log(
-			`  ✂ ${shortened} pauses ≥ ${pauses.minMs} ms shortened to their busiest ${pauses.keepMs} ms (pad ${pauses.padMs} ms)`,
+			`  ✂ ${shortened} pauses ≥ ${pauses.minMs} ms shortened to their busiest ${pauses.keepMs} ms (pad ${pauses.padMs} ms)${pauses.longMs !== undefined ? `, ≥ ${pauses.longMs} ms to ${pauses.keepLongMs ?? pauses.keepMs} ms` : ""}`,
 		);
 	else if (pauses) console.log(`  ✂ pauses ≥ ${pauses.minMs} ms (pad ${pauses.padMs} ms)`);
 	console.log(

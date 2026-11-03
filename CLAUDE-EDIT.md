@@ -91,6 +91,11 @@ Los efectos de cámara de Recordly (desenfoque de fondo, mirada) no van en ese a
   imagen**; lo quieto y callado se va. Recomendado para gaming:
   `{ "minMs": 2500, "padMs": 400, "keepMs": 1500 }`. El movimiento se mide una vez
   (`motion.json` en la carpeta de trabajo, ~2 min para 12 min de video).
+- `pauses.longMs` + `pauses.keepLongMs` (demos): las pausas de `longMs` o más se quedan en
+  `keepLongMs` y las demás en `keepMs`; así se van las pausas de pensar y en las largas queda
+  lo que pasa en pantalla. Perfil «recorrido»: `{ "minMs": 650, "padMs": 160, "keepMs": 250,
+  "longMs": 2500, "keepLongMs": 1500 }`. Un silencio partido por ruiditos (una espera larga) no
+  cuenta como una sola pausa: cortarlo a mano con `from`/`to`.
 
 ## Reglas de edición (para Claude)
 
