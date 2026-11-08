@@ -75,4 +75,6 @@ La política de contenido no auténtico de YouTube castiga los videos en serie c
 
 ## 8. Referencia
 
-Piloto: `videos/001-me-jala-el-mar/` en la carpeta del canal (`escena.js` es el ejemplo a copiar). Pendiente de aprobación de Isaac.
+Piloto APROBADO por Isaac (8-nov-2026, «Perfecto»): `videos/001-me-jala-el-mar/` en la carpeta del canal (`escena.js` es el ejemplo a copiar). Variante con otra estructura: `videos/002-me-muerde-terciopelo/` (varios sets, «pasillo de mitos» con X, voz de María).
+
+**Revisar siempre de cerca, en cuadro grande, los objetos orgánicos:** en la hoja chica una forma puede verse bien y en el video parecer otra cosa. La culebra salió primero como un montón de bolitas y luego con cabeza de hongo; se arregló con cuerpo continuo, cuello fino y cabeza en cuña.
