@@ -18,14 +18,18 @@ No es «5 consejos»: es una historia corta con una decisión en el medio.
 | 20–35 s | Qué pasa con lo que haría cualquiera | `medidor` que se cae, sello «¡La peor!» |
 | 35–65 s | La buena, en 2–4 pasos cortos | `paso`, flechas 3D, etiquetas |
 | 65–75 s | El caso extra («¿y si no podés?», «¿y si le pasa a otro?») | Plano nuevo |
-| últimos 5 s | «Mandáselo a…» y **el que sigue** | `siguiente`: la pregunta del próximo video |
+| últimos 5 s | «Mandáselo a…» con chiste y **pedir like y seguir** | `cierre`: tarjeta animada; nunca anunciar el próximo video (decisión de Isaac, 8-nov-2026) |
+
+**Humor en todos (pedido de Isaac):** una opción absurda en el A/B/C («Prender un cigarro», «Un riñón»), un remate en el guion y un chiste en el «mandáselo». En temas graves, el chiste nunca es sobre las víctimas ni le quita claridad a lo que hay que hacer.
+
+**Tres líneas para variar:** «¿qué hago si…?» (la receta de arriba); **historias al volante** (historia en primera persona con final y remate, desde adentro del carro; decir en la descripción que es ficción); **información útil para ticos** (trámites y plata: cédula digital, Hacienda, Caja; la pregunta puede ser «¿cuánto cuesta?», y remitir a la fuente oficial).
 
 Duración: 60–100 s, vertical 1080×1920. Una idea por video.
 
 ## 2. Cómo se ve
 
 - **Mundo 3D de colores planos y vivos:** formas redondeadas, sombra suave, cielo claro, sin texturas.
-- **Personaje simple y expresivo:** cabeza grande; las caras (`feliz`, `susto`, `cansado`) cuentan la historia.
+- **Personaje de caricatura:** tono de dibujo con contorno, codos, rodillas, manos y parpadeo; las poses se unen solas (`__suavizar`). Para doblar por la cintura, `doblar()`. Las caras (`feliz`, `susto`, `cansado`) cuentan la historia.
 - **Marca fija arriba:** burbuja naranja ¿QUÉ HAGO? + la situación. Si alguien cae a mitad del video, sabe de qué va.
 - **Subtítulos:** 1–3 palabras, mayúscula, gruesa, borde negro, a 2/3 de la altura. Lo importante en amarillo.
 - **Paleta:** naranja `#ff8a00`, amarillo `#ffd21f`, tinta `#141414`, rojo = mal, verde = bien.
